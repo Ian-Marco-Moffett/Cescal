@@ -42,32 +42,6 @@ static struct ASTNode* binexpr(void) {
     return mkastnode(ntype, left, right, 0);
 }
 
-static int64_t interpret_tree(struct ASTNode* root) {
-    int64_t leftval, rightval;
-
-    if (root->left) {
-        leftval = interpret_tree(root->left);
-    }
-
-    if (root->right) {
-        rightval = interpret_tree(root->right);
-    }
-
-    switch (root->op) {
-        case A_ADD:
-            return (leftval + rightval);
-        case A_SUB:
-            return (leftval - rightval);
-        case A_MUL:
-            return (leftval * rightval);
-        case A_DIV:
-            return (leftval / rightval);
-        case A_INTLIT:
-            return root->val_int;
-    }
-}
-
-
 void parse(void) {
     scan(&last_tok);
     struct ASTNode* root = binexpr();
