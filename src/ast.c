@@ -1,6 +1,7 @@
 #include <ast.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <panic.h>
 
 
 static struct ASTNode** allocated_nodes = NULL;
@@ -8,19 +9,12 @@ static size_t nodes_alloc_idx = 0;
 
 
 AST_NODE_TYPE arithop(TOKEN_TYPE tok) {
-    switch (tok) {
-        case TT_PLUS:
-            return A_ADD;
-        case TT_MINUS:
-            return A_SUB;
-        case TT_STAR:
-            return A_MUL;
-        case TT_SLASH:
-            return A_DIV;
-        default:
-            printf("__INTERNAL_ERROR__: Invalid token in arithop() [%d]\n", tok);
-            return 0;
+    if (tok > TT_EOF && tok < TT_INTLIT) {
+        return tok;
     }
+
+    printf("__INTERNAL_ERROR__: Invalid token in arithop() [%d]\n", tok);
+    panic();
 }
 
 struct ASTNode* mkastnode(AST_NODE_TYPE op, struct ASTNode* left, struct ASTNode* right, int64_t val_int) {

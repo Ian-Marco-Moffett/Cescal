@@ -55,6 +55,9 @@ static void call(const char* func_name) {
 }
 
 
+
+
+
 REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     int leftreg, rightreg;
 
@@ -92,6 +95,18 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             return reg_mul(leftreg, rightreg);
         case A_DIV:
             return reg_div(leftreg, rightreg);
+        case A_EQ:
+            return equal(leftreg, rightreg);
+        case A_NE:
+            return notequal(leftreg, rightreg);
+        case A_LT:
+            return lessthan(leftreg, rightreg);
+        case A_GT:
+            return greaterthan(leftreg, rightreg);
+        case A_LE:
+            return lessequal(leftreg, rightreg);
+        case A_GE:
+            return greaterequal(leftreg, rightreg);
         case A_INTLIT:
             return reg_load(n->val_int);
         case A_LINUX_PUTS:

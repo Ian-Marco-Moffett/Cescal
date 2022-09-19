@@ -6,10 +6,17 @@
 
 
 typedef enum {
+    A_EOF,          // Unused.
     A_ADD,
     A_SUB,
     A_MUL,
     A_DIV,
+    A_EQ,
+    A_NE,
+    A_LT,
+    A_GT,
+    A_LE,
+    A_GE,
     A_INTLIT,
     A_GLUE,
     A_FUNCTION,

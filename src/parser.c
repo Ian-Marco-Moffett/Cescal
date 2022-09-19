@@ -12,7 +12,6 @@ static struct Token last_tok;
 
 static void passert(TOKEN_TYPE type, const char* what) {
     if (last_tok.type != type) {
-        printf("%d\n", last_tok.type);
         printf("Syntax error: Expected '%s' on line %d\n", what, last_tok.line_number == 0 ? 1 : last_tok.line_number);
         panic();
     }
@@ -53,6 +52,12 @@ static struct ASTNode* binexpr(uint64_t line) {
         case TT_MINUS:
         case TT_STAR:
         case TT_SLASH:
+        case TT_LESSTHAN:
+        case TT_LESSTHANEQ:
+        case TT_GREATERTHAN:
+        case TT_GREATERTHANEQ:
+        case TT_EQEQ:
+        case TT_NOTEQUAL:
             break;
         default:
             printf("Syntax error: Expected '<arithmetic operator>' on line %d\n", last_tok.line_number);

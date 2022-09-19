@@ -1,0 +1,25 @@
+func cmp => null {
+    __linux_puts 1 != 2;
+    __linux_puts 1 != 1;
+    __linux_puts 1 == 1;
+}
+
+
+func cmp1 => null {
+    __linux_puts 2 < 3;
+    __linux_puts 3 > 2;
+    __linux_puts 2 <= 2;
+    __linux_puts 3 >= 2;
+}
+
+
+func math => null {
+    __linux_puts 123 + 456;
+}
+
+
+func main => null {
+    cmp();
+    cmp1();
+    math();
+}

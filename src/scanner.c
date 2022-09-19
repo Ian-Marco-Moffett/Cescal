@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define SHOULD_IGNORE(c) c == ' ' || c == '\t' || c == '\n' || c == '\r'
+#define PEEK_AHEAD(n) in_buf[in_buf_index + n]
 
 
 static const char* in_buf = NULL;
@@ -74,7 +75,7 @@ static const char* scanid(void) {
     char* buf = calloc(n + 3, sizeof(char));
     
     char ch = in_buf[in_buf_index++];
-    while (isalpha(ch) || ch == '_') {
+    while (isalpha(ch) || ch == '_' || IS_DIGIT_ASCII(ch)) {
         buf = realloc(buf, sizeof(char) * (n + 2));
         buf[n++] = ch;
         ch = in_buf[in_buf_index++];
@@ -107,7 +108,7 @@ uint8_t scan(struct Token* out) {
 
         tok = in_buf[++in_buf_index];
     }
-
+    
     switch (tok) {
         case '0':
         case '1':
@@ -139,13 +140,42 @@ uint8_t scan(struct Token* out) {
             out->type = TT_STAR;
             out->tokstring = NULL;
             break;
+        case '!':
+            if (PEEK_AHEAD(1) == '=') {
+                out->type = TT_NOTEQUAL;
+                in_buf_index += 1;
+            } else {
+                out->type = TT_NOT;
+            }
+            out->tokstring = NULL;
+            break;
         case '=':
-            out->type = TT_EQUALS;
+            if (PEEK_AHEAD(1) == '=') {
+                out->type = TT_EQEQ;
+                in_buf_index += 1;
+            } else {
+                out->type = TT_EQUALS;
+            }
             out->tokstring = NULL;
             break;
         case '>':
-            out->type = TT_GREATERTHAN;
+            if (PEEK_AHEAD(1) == '=') {
+                out->type = TT_GREATERTHANEQ;
+                in_buf_index += 1;
+            } else {
+                out->type = TT_GREATERTHAN;
+            }
             out->tokstring = NULL;
+            break;
+        case '<':
+            if (PEEK_AHEAD(1) == '=') {
+                out->type = TT_LESSTHANEQ;
+                in_buf_index += 1;
+            } else {
+                out->type = TT_LESSTHAN;
+            }
+
+            out->tokstring = NULL; 
             break;
         case '{':
             out->type = TT_LBRACE;

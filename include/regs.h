@@ -15,6 +15,14 @@ REG_T reg_add(REG_T r1, REG_T r2);
 REG_T reg_mul(REG_T r1, REG_T r2);
 REG_T reg_sub(REG_T r1, REG_T r2);
 REG_T reg_div(REG_T r1, REG_T r2);
+
+REG_T equal(REG_T r1, REG_T r2);
+REG_T notequal(REG_T r1, REG_T r2);
+REG_T lessthan(REG_T r1, REG_T r2);
+REG_T greaterthan(REG_T r1, REG_T r2);
+REG_T lessequal(REG_T r1, REG_T r2);
+REG_T greaterequal(REG_T r1, REG_T r2);
+
 void reg_printint(REG_T r);
 
 #endif
