@@ -103,22 +103,36 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
 
 
 void compile_start(void) {
-    g_out_file = fopen(OUT_NAME, "w");
+    if (!(get_flags() & COMPILE_FLAG_ASMONLY))
+        g_out_file = fopen(OUT_NAME, "w");
+    else
+        g_out_file = fopen("cescal-out.asm", "w");
+
     reg_init(g_out_file);
-    prologue();
+
+    if (!(get_flags() & COMPILE_FLAG_FREESTANDING)) {
+        prologue();
+    }
 }
 
 
 void compile_end(void) {
     fclose(g_out_file);
 
+    if (get_flags() & (COMPILE_FLAG_ASMONLY)) {
+        return;
+    }
+
     pid_t child = fork();
     if (child == 0) {
         execl(NASM_PATH, NASM_PATH, "-felf64", "-o./ces.o", OUT_NAME, NULL);
     } else {
         waitpid(child, 0, 0);
-        remove(OUT_NAME);
         kill(child, SIGKILL);
+    }
+
+    if (get_flags() & (COMPILE_FLAG_OBJ)) {
+        return;
     }
 
     child = fork();
