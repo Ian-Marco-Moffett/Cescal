@@ -4,13 +4,16 @@
 #include <scanner.h>
 #include <stddef.h>
 #include <parser.h>
+#include <symbol.h>
 
 static char* g_buf = NULL;
 static FILE* g_fp = NULL;
 
 void panic(void) {
-    free(g_buf);
-    fclose(g_fp);
+    if (g_buf != NULL) free(g_buf);
+    if (g_fp != NULL) fclose(g_fp);
+    scanner_destroy();
+    destroy_symtbl();
     exit(1);
 }
 
@@ -23,10 +26,12 @@ static void compile(FILE* fp) {
     // Allocate memory for file buffer.
     char* buf = calloc(fsize + 1, sizeof(char));
     fread(buf, sizeof(char), fsize, fp);
-
+    
+    sym_tbl_init();
     scanner_init(buf);
     parse();
     free(buf);
+    destroy_symtbl();
 }
 
 

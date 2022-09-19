@@ -10,7 +10,10 @@ typedef enum {
     A_SUB,
     A_MUL,
     A_DIV,
-    A_INTLIT
+    A_INTLIT,
+    A_GLUE,
+    A_FUNCTION,
+    A_LINUX_PUTS
 } AST_NODE_TYPE;
 
 
@@ -18,13 +21,18 @@ struct ASTNode {
     AST_NODE_TYPE op;
     struct ASTNode* left;
     struct ASTNode* right;
-    int64_t val_int;
+
+    union {
+        int64_t val_int;
+        int64_t id;
+    };
 };
 
 
 AST_NODE_TYPE arithop(TOKEN_TYPE tok);
 struct ASTNode* mkastnode(AST_NODE_TYPE op, struct ASTNode* left, struct ASTNode* right, int64_t val_int);
 struct ASTNode* mkastleaf(AST_NODE_TYPE op, int64_t int_val);
+struct ASTNode* mkastunary(AST_NODE_TYPE op, struct ASTNode* left, int64_t int_val);
 
 
 #endif

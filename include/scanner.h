@@ -5,6 +5,8 @@
 
 
 void scanner_init(const char* buf);
+void scanner_destroy(void);
+uint8_t scanner_is_eof(void);
 
 
 /*

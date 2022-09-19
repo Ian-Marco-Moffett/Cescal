@@ -18,7 +18,7 @@ AST_NODE_TYPE arithop(TOKEN_TYPE tok) {
         case TT_SLASH:
             return A_DIV;
         default:
-            printf("__INTERNAL_ERROR__: Invalid token in arithop()\n");
+            printf("__INTERNAL_ERROR__: Invalid token in arithop() [%d]\n", tok);
             return 0;
     }
 }
@@ -52,4 +52,9 @@ struct ASTNode* mkastnode(AST_NODE_TYPE op, struct ASTNode* left, struct ASTNode
 
 struct ASTNode* mkastleaf(AST_NODE_TYPE op, int64_t int_val) {
     return mkastnode(op, NULL, NULL, int_val);
+}
+
+
+struct ASTNode* mkastunary(AST_NODE_TYPE op, struct ASTNode* left, int64_t int_val) {
+    return mkastnode(op, left, NULL, int_val);
 }

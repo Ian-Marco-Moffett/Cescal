@@ -16,6 +16,11 @@ static REG_T reg_alloc(void) {
 }
 
 
+void regs_free(void) {
+    reg_bmp = 0xFF;
+}
+
+
 static void reg_free(REG_T reg) {
     if (reg < 4) {
         reg_bmp |= (1 << reg);

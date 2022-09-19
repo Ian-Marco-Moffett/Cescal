@@ -1,1 +1,8 @@
-10 * 2
+func test => null {
+    __linux_puts 7;
+}
+
+func main => null {
+    __linux_puts 999;
+    __linux_puts 123;
+}

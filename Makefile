@@ -9,5 +9,4 @@ bin/cesc: $(CFILES)
         -Werror=implicit-int \
         -Werror=int-conversion \
         -Werror=incompatible-pointer-types \
-        -Werror=int-to-pointer-cast -o $@ \
-		-fsanitize=address
+        -Werror=int-to-pointer-cast -o $@

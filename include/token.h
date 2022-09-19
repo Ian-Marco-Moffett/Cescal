@@ -8,12 +8,29 @@
 
 
 typedef enum {
-    TT_INTLIT,
-    TT_SLASH,
-    TT_PLUS,
-    TT_MINUS,
-    TT_STAR,
+    TT_INTLIT,          // 0.
+    TT_SLASH,           // 1.
+    TT_PLUS,            // 2.
+    TT_MINUS,           // 3.
+    TT_STAR,            // 4.
+    TT_FUNC,            // 5.
+    TT_ID,              // 6.
+    TT_EQUALS,          // 7.
+    TT_GREATERTHAN,     // 8.
+    TT_LESSTHAN,        // 9.
+    TT_LBRACE,          // 10.
+    TT_RBRACE,          // 11.
+    TT_NULL,            // 12.
+    TT_SEMI,            // 13.
+    TT_LPAREN,          // 14.
+    TT_RPAREN,          // 15.
+
+    // Compiler built in related stuff.
+    TT_LINUX_PUTS,
+    
+    // Other.
     TT_EOF,
+    TT_INVALID
 } TOKEN_TYPE;
 
 
