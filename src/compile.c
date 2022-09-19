@@ -117,7 +117,7 @@ void compile_end(void) {
         execl(NASM_PATH, NASM_PATH, "-felf64", "-o./ces.o", OUT_NAME, NULL);
     } else {
         waitpid(child, 0, 0);
-        // remove(OUT_NAME);
+        remove(OUT_NAME);
         kill(child, SIGKILL);
     }
 
