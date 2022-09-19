@@ -12,6 +12,7 @@ static struct Token last_tok;
 
 static void passert(TOKEN_TYPE type, const char* what) {
     if (last_tok.type != type) {
+        printf("%d\n", last_tok.type);
         printf("Syntax error: Expected '%s' on line %d\n", what, last_tok.line_number == 0 ? 1 : last_tok.line_number);
         panic();
     }
@@ -84,6 +85,28 @@ static struct ASTNode* print_statement(void) {
 }
 
 
+static struct ASTNode* funccall(void) {
+    struct ASTNode* tree;
+    int64_t id;
+
+    if ((id = findglob(last_tok.tokstring)) == -1) {
+        printf("Error: Undeclared function '%s', line %d\n", last_tok.tokstring, last_tok.line_number);
+        panic();
+    }
+
+    scan(&last_tok);
+    passert(TT_LPAREN, "(");
+    scan(&last_tok);
+
+    // TODO: ARGUMENTS!!!
+    passert(TT_RPAREN, ")");
+    scan(&last_tok);
+
+    tree = mkastunary(A_FUNCCALL, tree, id);
+    return tree;
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -101,6 +124,11 @@ static struct ASTNode* compound_statement(void) {
                 return left;
             case TT_LINUX_PUTS:
                 tree = print_statement();
+                break;
+            case TT_ID:
+                // TODO: CHANGE THIS LATER.
+                tree =funccall();
+                scan(&last_tok);            // Skip semi.
                 break;
             default:
                 printf("%d\n", last_tok.type);

@@ -74,12 +74,13 @@ static const char* scanid(void) {
     char* buf = calloc(n + 3, sizeof(char));
     
     char ch = in_buf[in_buf_index++];
-    while (isalpha(ch) || ch == '_' && ch) {
+    while (isalpha(ch) || ch == '_') {
         buf = realloc(buf, sizeof(char) * (n + 2));
         buf[n++] = ch;
         ch = in_buf[in_buf_index++];
-    } 
+    }
     
+    --in_buf_index;
     last_alloc = buf;
     return buf;
 }
@@ -163,8 +164,9 @@ uint8_t scan(struct Token* out) {
             out->tokstring = NULL;
             break;
         case ')':
-            out-.type = TT_RPAREN;
+            out->type = TT_RPAREN;
             out->tokstring = NULL;
+            break;
         default: 
             // Identifier or keyword.
             if (isalpha(tok) || tok == '_') {

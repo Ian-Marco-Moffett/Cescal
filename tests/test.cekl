@@ -1,8 +1,15 @@
-func test => null {
+func fav_nums => null {
     __linux_puts 7;
+    __linux_puts 10;
+}
+
+func blah => null {
+    __linux_puts 0;
+    __linux_puts 1;
+    __linux_puts 2;
 }
 
 func main => null {
-    __linux_puts 999;
-    __linux_puts 123;
+    fav_nums();
+    blah();
 }

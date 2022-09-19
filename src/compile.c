@@ -50,6 +50,11 @@ static void gen_func_epilogue(void) {
 }
 
 
+static void call(const char* func_name) {
+    fprintf(g_out_file, "\tcall %s\n", func_name);
+}
+
+
 REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     int leftreg, rightreg;
 
@@ -66,6 +71,9 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
                 ast_gen(n->left, -1, n->op);
             }
             gen_func_epilogue();
+            return -1;
+        case A_FUNCCALL:
+            call(g_globsymTable[n->id]);
             return -1;
     }
 
@@ -89,7 +97,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_LINUX_PUTS:
             reg_printint(leftreg);
             regs_free();
-            return -1;
+            return -1; 
     }
 }
 
@@ -109,7 +117,7 @@ void compile_end(void) {
         execl(NASM_PATH, NASM_PATH, "-felf64", "-o./ces.o", OUT_NAME, NULL);
     } else {
         waitpid(child, 0, 0);
-        remove(OUT_NAME);
+        // remove(OUT_NAME);
         kill(child, SIGKILL);
     }
 

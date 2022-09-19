@@ -13,7 +13,8 @@ typedef enum {
     A_INTLIT,
     A_GLUE,
     A_FUNCTION,
-    A_LINUX_PUTS
+    A_LINUX_PUTS,
+    A_FUNCCALL,
 } AST_NODE_TYPE;
 
 
