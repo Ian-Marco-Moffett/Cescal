@@ -1,4 +1,14 @@
-func main => null {
+func greet => null {
     __linux_puts "Hello, World!";
-    __linux_puts "In loving memory of Kessy, my cat.";
+}
+
+func math => null {
+    __linux_puts "Lucky number:";
+    u8 unlucky = 13;
+    __linux_puts unlucky - 6;
+}
+
+func main => null {
+    greet();
+    math();
 }
