@@ -1,0 +1,5 @@
+func main => null {
+    u16 big = 3000;
+    u16 small = big/2;
+    __linux_puts small;
+}

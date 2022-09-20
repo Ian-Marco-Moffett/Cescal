@@ -142,7 +142,7 @@ static struct ASTNode* funccall(void) {
 }
 
 
-static struct ASTNode* var_def(void) {
+static struct ASTNode* var_def(SYMBOL_PTYPE ptype) {
     struct ASTNode* left;
     struct ASTNode* right;
     struct ASTNode* tree;
@@ -155,7 +155,7 @@ static struct ASTNode* var_def(void) {
         panic();
     }
 
-    uint64_t nameslot = addglob(last_tok.tokstring);
+    uint64_t nameslot = addglob(last_tok.tokstring, S_VAR, ptype);
     scan(&last_tok);
 
     right = mkastleaf(A_LVIDENT, nameslot);
@@ -185,6 +185,11 @@ static struct ASTNode* id(void) {
 
     if (id == -1) {
         printf("ERROR: Attempting to assign to non-existing variable '%s' on line %d\n", last_tok.tokstring, last_tok.line_number);
+        panic();
+    }
+
+    if (g_globsymTable[id].stype != S_VAR) {
+        printf("ERROR: Bro, you tried to assign a value to a function on line %d\n", last_tok.line_number);
         panic();
     }
     
@@ -220,12 +225,23 @@ static struct ASTNode* compound_statement(void) {
                 tree = print_statement();
                 break;
             case TT_ID:
-                // TODO: CHANGE THIS LATER.
                 tree = id();
                 break;
             case TT_U8:
                 scan(&last_tok);
-                tree = var_def();
+                tree = var_def(P_U8);
+                break;
+            case TT_U16:
+                scan(&last_tok);
+                tree = var_def(P_U16);
+                break;
+            case TT_U32:
+                scan(&last_tok);
+                tree = var_def(P_U32);
+                break;
+            case TT_U64:
+                scan(&last_tok);
+                tree = var_def(P_U64);
                 break;
             default:
                 printf("%d\n", last_tok.type);
@@ -249,7 +265,7 @@ static struct ASTNode* func_decl(void) {
     passert(TT_FUNC, "func");
     scan(&last_tok);
     ident();
-    uint64_t nameslot = addglob(last_tok.tokstring);
+    uint64_t nameslot = addglob(last_tok.tokstring, S_FUNC, 0);
     
     scan(&last_tok);
     passert(TT_EQUALS, "=>");

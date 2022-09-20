@@ -65,8 +65,23 @@ static void call(const char* func_name) {
 
 
 void genglobsym(int64_t nameslot) {
-    // TODO: When more variables with different sizes come, change this.
-    fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot]);
+    switch (g_globsymTable[nameslot].ptype) {
+        case P_U8:
+            fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot]);
+            break;
+        case P_U16:
+            fprintf(g_out_file, "\nsection .data\n%s: dw 0\n\n", g_globsymTable[nameslot]);
+            break;
+        case P_U32:
+            fprintf(g_out_file, "\nsection .data\n%s: dd 0\n\n", g_globsymTable[nameslot]);
+            break;
+        case P_U64:
+            fprintf(g_out_file, "\nsection .data\n%s: dq 0\n\n", g_globsymTable[nameslot]);
+            break;
+        default:
+            printf("__INTERNAL_ERROR__: Invalid ptype in %s()\n", __func__);
+            panic();
+    }
 }
 
 
@@ -93,14 +108,14 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             regs_free();
             return -1;
         case A_FUNCTION:
-            gen_func_prologue(g_globsymTable[n->id]);
+            gen_func_prologue(g_globsymTable[n->id].name);
             if (n->left != NULL) {
                 ast_gen(n->left, -1, n->op);
             }
             gen_func_epilogue();
             return -1;
         case A_FUNCCALL:
-            call(g_globsymTable[n->id]);
+            call(g_globsymTable[n->id].name);
             return -1;
     }
 
@@ -134,11 +149,11 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_INTLIT:
             return reg_load(n->val_int);
         case A_LVIDENT:
-            return reg_store_glob(reg, g_globsymTable[n->id]);
+            return reg_store_glob(reg, n->id);
         case A_STRLIT:
             return load_strlit(n->id);
         case A_ID:
-            return load_glob(g_globsymTable[n->id]);
+            return load_glob(n->id);
         case A_ASSIGN:
             return rightreg;
         case A_LINUX_PUTS:

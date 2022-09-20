@@ -31,7 +31,10 @@ typedef enum {
     TT_RPAREN,          // 20.
     TT_NOT,             // 21.
     TT_U8,              // 22.
-    TT_STRINGLIT,       // 23.
+    TT_U16,             // 23.
+    TT_U32,             // 24.
+    TT_U64,             // 25.
+    TT_STRINGLIT,       // 26.
 
     // Compiler built in related stuff.
     TT_LINUX_PUTS, 

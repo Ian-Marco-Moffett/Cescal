@@ -4,6 +4,28 @@
 #include <stdint.h>
 
 
+// Structural types.
+typedef enum {
+    S_VAR,
+    S_FUNC
+} SYMBOL_STYPE;
+
+// Primitive types.
+typedef enum {
+    P_U8,
+    P_U16,
+    P_U32,
+    P_U64
+} SYMBOL_PTYPE;
+
+
+struct Symbol {
+    const char* name;
+    SYMBOL_STYPE stype;
+    SYMBOL_PTYPE ptype;
+};
+
+
 void sym_tbl_init(void);
 
 /*
@@ -12,7 +34,7 @@ void sym_tbl_init(void);
  *  Returns: Slot number of new symbol.
  *
  */
-uint64_t addglob(const char* name);
+uint64_t addglob(const char* name, SYMBOL_STYPE stype, SYMBOL_PTYPE ptype);
 
 
 /*
@@ -21,10 +43,9 @@ uint64_t addglob(const char* name);
  */
 
 int64_t findglob(const char* name);
-
 void destroy_symtbl(void);
 
 
-extern char** g_globsymTable;
+extern struct Symbol* g_globsymTable;
 
 #endif

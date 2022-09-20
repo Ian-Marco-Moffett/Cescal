@@ -129,6 +129,12 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_NULL;
     } else if (strcmp(id, "u8") == 0) {
         return TT_U8;
+    } else if (strcmp(id, "u16") == 0) {
+        return TT_U16;
+    } else if (strcmp(id, "u32") == 0) {
+        return TT_U32;
+    } else if (strcmp(id, "u64") == 0) {
+        return TT_U64;
     }
 
     return TT_ID;

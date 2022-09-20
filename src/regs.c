@@ -1,11 +1,14 @@
 #include <regs.h>
 #include <symbol.h>
+#include <panic.h>
 #include <stddef.h>
 
 static uint8_t reg_bmp = 0xFF;
 static FILE* g_out_file;
 static const char* const REGS[4] = {"r8", "r9", "r10", "r11"};
-static const char* const BREGS[4] = { "r8b", "r9b", "r10b", "r11b" };
+static const char* const BREGS[4] = {"r8b", "r9b", "r10b", "r11b"};
+static const char* const WREGS[4] = {"r8w", "r9w", "r10w", "r11w"};
+static const char* const DREGS[4] = {"r8d", "r9d", "r10d", "r11d"};
 
 static REG_T reg_alloc(void) {
     for (REG_T reg = 0; reg < 4; ++reg) {
@@ -104,16 +107,53 @@ void regs_free(void) {
 }
 
 
-REG_T reg_store_glob(REG_T r, const char* glob_name) {
-    // TODO: Update this when type sizes differ.
-    fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
+REG_T reg_store_glob(REG_T r, int64_t nameslot) {
+    const char* glob_name = g_globsymTable[nameslot].name;
+
+    switch (g_globsymTable[nameslot].ptype) {
+        case P_U8:
+            fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
+            break;
+        case P_U16:
+            fprintf(g_out_file, "\tmov word [%s], %s\n", glob_name, WREGS[r]);
+            break;
+        case P_U32:
+            fprintf(g_out_file, "\tmov dword [%s], %s\n", glob_name, DREGS[r]);
+            break;
+        case P_U64: 
+            fprintf(g_out_file, "\tmov qword [%s], %s\n", glob_name, REGS[r]);
+            break;
+        default:
+            printf("__INTERNAL_ERROR__: Invalid ptype in %s()\n", __func__);
+            panic();
+    }
+
     return r;
 }
 
 
-REG_T load_glob(const char* glob_name) {
+REG_T load_glob(int64_t nameslot) {
+    const char* glob_name = g_globsymTable[nameslot].name;
     REG_T alloc = reg_alloc();
-    fprintf(g_out_file, "\tmovzx %s, byte [%s]\n", REGS[alloc], glob_name);
+    
+    switch (g_globsymTable[nameslot].ptype) {
+        case P_U8:
+            fprintf(g_out_file, "\tmovsx %s, byte [%s]\n", REGS[alloc], glob_name);
+            break;
+        case P_U16:
+            fprintf(g_out_file, "\tmovsx %s, word [%s]\n", REGS[alloc], glob_name);
+            break;
+        case P_U32:
+            fprintf(g_out_file, "\tmovsxd %s, dword [%s]\n", REGS[alloc], glob_name);
+            break;
+        case P_U64:
+            fprintf(g_out_file, "\tmov %s, qword [%s]\n", REGS[alloc], glob_name);
+            break;
+        default:
+            printf("__INTERNAL_ERROR__: Invalid ptype in %s()\n", __func__);
+            panic();
+    }
+
     return alloc;
 }
 
