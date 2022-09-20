@@ -10,3 +10,7 @@ bin/cesc: $(CFILES)
         -Werror=int-conversion \
         -Werror=incompatible-pointer-types \
         -Werror=int-to-pointer-cast -o $@
+
+
+install:
+	sudo install bin/cesc /usr/local/bin/
