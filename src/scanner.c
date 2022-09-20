@@ -94,6 +94,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_LINUX_PUTS;
     } else if (strcmp(id, "null") == 0) {
         return TT_NULL;
+    } else if (strcmp(id, "u8") == 0) {
+        return TT_U8;
     }
 
     return TT_ID;

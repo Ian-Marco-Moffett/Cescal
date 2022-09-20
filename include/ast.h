@@ -22,6 +22,9 @@ typedef enum {
     A_FUNCTION,
     A_LINUX_PUTS,
     A_FUNCCALL,
+    A_LVIDENT,
+    A_ASSIGN,
+    A_ID,
 } AST_NODE_TYPE;
 
 

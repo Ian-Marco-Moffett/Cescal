@@ -22,7 +22,10 @@ REG_T lessthan(REG_T r1, REG_T r2);
 REG_T greaterthan(REG_T r1, REG_T r2);
 REG_T lessequal(REG_T r1, REG_T r2);
 REG_T greaterequal(REG_T r1, REG_T r2);
+REG_T reg_store_glob(REG_T r, const char* glob_name);           // Store reg into glob.
+REG_T load_glob(const char* glob_name);                         // Load glob into reg.
 
 void reg_printint(REG_T r);
+
 
 #endif

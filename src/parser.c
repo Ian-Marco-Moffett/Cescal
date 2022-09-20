@@ -12,6 +12,7 @@ static struct Token last_tok;
 
 static void passert(TOKEN_TYPE type, const char* what) {
     if (last_tok.type != type) {
+        printf("%d\n", last_tok.type);
         printf("Syntax error: Expected '%s' on line %d\n", what, last_tok.line_number == 0 ? 1 : last_tok.line_number);
         panic();
     }
@@ -20,10 +21,21 @@ static void passert(TOKEN_TYPE type, const char* what) {
 
 static struct ASTNode* primary(void) {
     const struct ASTNode* n;
+    int64_t id;
 
     switch (last_tok.type) {
         case TT_INTLIT:
             n = mkastleaf(A_INTLIT, last_tok.tokint);
+            scan(&last_tok);
+            return (void*)n;
+        case TT_ID:
+            id = findglob(last_tok.tokstring);
+
+            if (id == -1) {
+                printf("ERROR: Undeclared variable '%s' used on line %d\n", last_tok.tokstring, last_tok.line_number);
+                panic();
+            }
+            n = mkastleaf(A_ID, id);
             scan(&last_tok);
             return (void*)n;
         default:
@@ -112,6 +124,35 @@ static struct ASTNode* funccall(void) {
 }
 
 
+static struct ASTNode* var_def(void) {
+    struct ASTNode* left;
+    struct ASTNode* right;
+    struct ASTNode* tree;
+    int64_t id;
+
+    passert(TT_ID, "identifier");
+
+    if (findglob(last_tok.tokstring) != -1) {
+        printf("ERROR: Redeclaring variable on line %d\n", last_tok.line_number);
+        panic();
+    }
+
+    uint64_t nameslot = addglob(last_tok.tokstring);
+    scan(&last_tok);
+
+    right = mkastleaf(A_LVIDENT, nameslot);
+
+    // TODO: Allow unassigned variables later.
+    passert(TT_EQUALS, "=");
+    scan(&last_tok);
+
+    left = binexpr(last_tok.line_number);
+    tree = mkastnode(A_ASSIGN, left, right, 0);
+    genglobsym(nameslot);
+    return tree;
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -132,8 +173,12 @@ static struct ASTNode* compound_statement(void) {
                 break;
             case TT_ID:
                 // TODO: CHANGE THIS LATER.
-                tree =funccall();
+                tree = funccall();
                 scan(&last_tok);            // Skip semi.
+                break;
+            case TT_U8:
+                scan(&last_tok);
+                tree = var_def();
                 break;
             default:
                 printf("%d\n", last_tok.type);

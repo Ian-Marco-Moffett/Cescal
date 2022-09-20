@@ -1,4 +1,5 @@
 #include <regs.h>
+#include <symbol.h>
 
 static uint8_t reg_bmp = 0xFF;
 static FILE* g_out_file;
@@ -94,4 +95,18 @@ void reg_init(FILE* out) {
 
 void regs_free(void) {
     reg_bmp = 0xFF;
+}
+
+
+REG_T reg_store_glob(REG_T r, const char* glob_name) {
+    // TODO: Update this when type sizes differ.
+    fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
+    return r;
+}
+
+
+REG_T load_glob(const char* glob_name) {
+    REG_T alloc = reg_alloc();
+    fprintf(g_out_file, "\tmovzx %s, byte [%s]\n", REGS[alloc], glob_name);
+    return alloc;
 }

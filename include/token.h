@@ -30,6 +30,7 @@ typedef enum {
     TT_LPAREN,          // 19.
     TT_RPAREN,          // 20.
     TT_NOT,             // 21.
+    TT_U8,              // 22.
 
     // Compiler built in related stuff.
     TT_LINUX_PUTS, 

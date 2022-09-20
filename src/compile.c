@@ -6,6 +6,7 @@
 #include <regs.h>
 #include <ast.h>
 #include <symbol.h>
+#include <panic.h>
 
 #define GCC_PATH "/bin/gcc"
 #define NASM_PATH "/bin/nasm"
@@ -55,6 +56,10 @@ static void call(const char* func_name) {
 }
 
 
+void genglobsym(int64_t nameslot) {
+    // TODO: When more variables with different sizes come, change this.
+    fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot]);
+}
 
 
 
@@ -84,7 +89,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         leftreg = ast_gen(n->left, -1, n->op);
 
     if (n->right)
-        rightreg = ast_gen(n->right, -1, n->op);
+        rightreg = ast_gen(n->right, leftreg, n->op);
 
     switch (n->op) {
         case A_ADD:
@@ -109,10 +114,19 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             return greaterequal(leftreg, rightreg);
         case A_INTLIT:
             return reg_load(n->val_int);
+        case A_LVIDENT:
+            return reg_store_glob(reg, g_globsymTable[n->id]);
+        case A_ID:
+            return load_glob(g_globsymTable[n->id]);
+        case A_ASSIGN:
+            return rightreg;
         case A_LINUX_PUTS:
             reg_printint(leftreg);
             regs_free();
             return -1; 
+        default:
+            printf("__INTERNAL_ERROR__: Unknown AST operator [%d]!\n", n->op);
+            panic();
     }
 }
 
