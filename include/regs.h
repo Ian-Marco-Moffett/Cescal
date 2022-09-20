@@ -26,6 +26,7 @@ REG_T reg_store_glob(REG_T r, const char* glob_name);           // Store reg int
 REG_T load_glob(const char* glob_name);                         // Load glob into reg.
 
 void reg_printint(REG_T r);
+void reg_printstr(REG_T r);
 
 
 #endif

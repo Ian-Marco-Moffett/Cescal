@@ -1,0 +1,4 @@
+func main => null {
+    __linux_puts "Hello, World!";
+    __linux_puts "In loving memory of Kessy, my cat.";
+}

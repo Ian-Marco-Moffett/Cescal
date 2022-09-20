@@ -25,6 +25,7 @@ typedef enum {
     A_LVIDENT,
     A_ASSIGN,
     A_ID,
+    A_STRLIT,
 } AST_NODE_TYPE;
 
 

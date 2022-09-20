@@ -1,5 +1,6 @@
 #include <regs.h>
 #include <symbol.h>
+#include <stddef.h>
 
 static uint8_t reg_bmp = 0xFF;
 static FILE* g_out_file;
@@ -81,6 +82,11 @@ void reg_printint(REG_T r) {
     reg_free(r);
 }
 
+void reg_printstr(REG_T r) {
+    fprintf(g_out_file, "\tmov rdi, %s\n", REGS[r]);
+    fprintf(g_out_file, "\tcall printstr\n");
+}
+
 
 REG_T reg_mul(REG_T r1, REG_T r2) {
     fprintf(g_out_file, "\timul %s, %s\n", REGS[r1], REGS[r2]);
@@ -108,5 +114,11 @@ REG_T reg_store_glob(REG_T r, const char* glob_name) {
 REG_T load_glob(const char* glob_name) {
     REG_T alloc = reg_alloc();
     fprintf(g_out_file, "\tmovzx %s, byte [%s]\n", REGS[alloc], glob_name);
+    return alloc;
+}
+
+REG_T load_strlit(size_t str_num) {
+    REG_T alloc = reg_alloc();
+    fprintf(g_out_file, "\tmov %s, _STR_%d_\n", REGS[alloc], str_num);
     return alloc;
 }

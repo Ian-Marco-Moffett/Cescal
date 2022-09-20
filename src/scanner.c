@@ -87,6 +87,29 @@ static const char* scanid(void) {
 }
 
 
+static const char* scanstr(void) {
+    size_t n = 0;
+    char* buf = calloc(n + 3, sizeof(char));
+    size_t start_line_num = line_number;
+    
+    char ch = in_buf[++in_buf_index];
+    while (ch != '"') {
+        buf = realloc(buf, sizeof(char) * (n + 2));
+        buf[n++] = ch;
+        ch = in_buf[++in_buf_index];
+
+        if (ch == 0) {
+            free(buf);
+            printf("ERROR: EOF found before double quote while scanning string literal, line %d\n", start_line_num);
+            panic();
+        }
+    }
+    
+    last_alloc = buf;
+    return buf;
+}
+
+
 static TOKEN_TYPE id_get_tok(const char* id) {
     if (strcmp(id, "func") == 0) {
         return TT_FUNC;
@@ -99,6 +122,11 @@ static TOKEN_TYPE id_get_tok(const char* id) {
     }
 
     return TT_ID;
+}
+
+
+void scanner_clear_cache(void) {
+    last_alloc = NULL;
 }
 
 
@@ -141,6 +169,10 @@ uint8_t scan(struct Token* out) {
         case '*':
             out->type = TT_STAR;
             out->tokstring = NULL;
+            break;
+        case '"':
+            out->type = TT_STRINGLIT;
+            out->tokstring = scanstr();
             break;
         case '!':
             if (PEEK_AHEAD(1) == '=') {

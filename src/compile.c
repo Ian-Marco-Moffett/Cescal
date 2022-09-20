@@ -19,9 +19,17 @@ static void prologue(void) {
   fputs(
           "extern printf\n\n"
           "section .data\n"
-          "string: db \"%d\", 0xA, 0\n\n"
+          "integer: db \"%d\", 0xA, 0\n\n"
+          "string: db \"%s\", 0xA, 0\n\n"
           "section .text\n" 
           "printint:\n"
+          "\tmov rsi, rdi\n"
+          "\tmov rdi, integer\n"
+          "\tpush rsp\n"
+          "\tcall [rel printf wrt ..got]\n"
+          "\tpop rsp\n"
+          "\tret\n\n"
+          "printstr:\n"
           "\tmov rsi, rdi\n"
           "\tmov rdi, string\n"
           "\tpush rsp\n"
@@ -59,6 +67,17 @@ static void call(const char* func_name) {
 void genglobsym(int64_t nameslot) {
     // TODO: When more variables with different sizes come, change this.
     fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot]);
+}
+
+
+static size_t str_count = 0;
+void genglobsym_str(const char* str) {
+    fprintf(g_out_file, "\nsection .data\n_STR_%d_: db \"%s\", 0\n\n", str_count++, str);
+}
+
+
+size_t globsym_get_strcnt(void) {
+    return str_count;
 }
 
 
@@ -116,11 +135,19 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             return reg_load(n->val_int);
         case A_LVIDENT:
             return reg_store_glob(reg, g_globsymTable[n->id]);
+        case A_STRLIT:
+            return load_strlit(n->id);
         case A_ID:
             return load_glob(g_globsymTable[n->id]);
         case A_ASSIGN:
             return rightreg;
         case A_LINUX_PUTS:
+            if (n->left->op == A_STRLIT) {
+                reg_printstr(leftreg);
+                regs_free();
+                return -1;
+            }
+
             reg_printint(leftreg);
             regs_free();
             return -1; 

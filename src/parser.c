@@ -38,8 +38,12 @@ static struct ASTNode* primary(void) {
             n = mkastleaf(A_ID, id);
             scan(&last_tok);
             return (void*)n;
+        case TT_STRINGLIT:
+            free((void*)last_tok.tokstring);
+            printf("ERROR: String variables are coming soon! (error on line %d)\n", last_tok.line_number);
+            panic();
         default:
-            printf("Syntax error: Expected integer on line %d\n", last_tok.line_number);
+            printf("Syntax error: Expected expression on line %d\n", last_tok.line_number);
             panic();
     }
 }
@@ -96,6 +100,20 @@ static struct ASTNode* print_statement(void) {
 
     passert(TT_LINUX_PUTS, "__linux_puts");
     scan(&last_tok);
+    
+    if (last_tok.type == TT_STRINGLIT) {
+        tree = mkastleaf(A_STRLIT, globsym_get_strcnt());
+        genglobsym_str(last_tok.tokstring);
+        free((void*)last_tok.tokstring);
+        scanner_clear_cache();  
+
+        tree = mkastunary(A_LINUX_PUTS, tree, 0);
+        scan(&last_tok);
+        passert(TT_SEMI, ";");
+        scan(&last_tok);
+        return tree;
+    }
+
     tree = binexpr(last_tok.line_number);
     tree = mkastunary(A_LINUX_PUTS, tree, 0);
     return tree;
