@@ -35,6 +35,12 @@ uint8_t scanner_is_eof(void) {
 }
 
 
+void scanner_peek(struct Token* out) {
+    size_t tmp = in_buf_index;
+    scan(out);
+    in_buf_index = tmp;
+}
+
 
 static int64_t scanint(void) {
     size_t n = 0;
@@ -131,7 +137,7 @@ void scanner_clear_cache(void) {
 
 
 uint8_t scan(struct Token* out) {
-    char tok = in_buf[in_buf_index]; 
+    char tok = in_buf[in_buf_index];
     while (SHOULD_IGNORE(tok)) {
         if (tok == '\n')
             ++line_number;

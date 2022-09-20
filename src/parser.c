@@ -171,6 +171,34 @@ static struct ASTNode* var_def(void) {
 }
 
 
+static struct ASTNode* id(void) {
+    struct Token peek;
+    scanner_peek(&peek);
+
+    if (peek.type == TT_LPAREN) {
+        return funccall();
+    }
+
+    int64_t id = findglob(last_tok.tokstring);
+
+    if (id == -1) {
+        printf("ERROR: Attempting to assign to non-existing variable '%s' on line %d\n", last_tok.tokstring, last_tok.line_number);
+        panic();
+    }
+    
+    scan(&last_tok);
+    struct ASTNode* right = mkastleaf(A_LVIDENT, id);
+    
+    // Must be reassignment for now.
+    passert(TT_EQUALS, "=");
+    scan(&last_tok);
+
+    struct ASTNode* left = binexpr(last_tok.line_number);
+    struct ASTNode* tree = mkastnode(A_ASSIGN, left, right, 0);
+    return tree;
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -191,8 +219,7 @@ static struct ASTNode* compound_statement(void) {
                 break;
             case TT_ID:
                 // TODO: CHANGE THIS LATER.
-                tree = funccall();
-                scan(&last_tok);            // Skip semi.
+                tree = id();
                 break;
             case TT_U8:
                 scan(&last_tok);

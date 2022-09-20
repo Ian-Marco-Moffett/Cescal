@@ -1,0 +1,6 @@
+func main => null {
+    u8 var = 0;
+    __linux_puts var;
+    var = 1;
+    __linux_puts var;
+}
