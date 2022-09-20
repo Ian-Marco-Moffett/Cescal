@@ -35,7 +35,10 @@ typedef enum {
 
     // Compiler built in related stuff.
     TT_LINUX_PUTS, 
-    TT_INVALID 
+    TT_INVALID,
+
+    // NOT USED IN PARSING.
+    TT_INCLUDE,
 } TOKEN_TYPE;
 
 

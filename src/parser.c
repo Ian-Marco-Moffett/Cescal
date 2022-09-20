@@ -176,7 +176,9 @@ static struct ASTNode* id(void) {
     scanner_peek(&peek);
 
     if (peek.type == TT_LPAREN) {
-        return funccall();
+        struct ASTNode* tree = funccall();
+        scan(&last_tok);
+        return tree;
     }
 
     int64_t id = findglob(last_tok.tokstring);
@@ -273,4 +275,17 @@ void parse(void) {
     }
 
     compile_end();
+}
+
+
+void parse_noreset(void) {
+    struct Token tmp = last_tok;
+
+    scan(&last_tok);
+    while (!(scanner_is_eof())) {
+        struct ASTNode* root = func_decl();
+        ast_gen(root, -1, 0);
+    }
+
+    last_tok = tmp;
 }

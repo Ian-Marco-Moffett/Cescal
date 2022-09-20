@@ -3,6 +3,7 @@
 
 
 void panic(void);
+void set_current_filename(const char* fname);
 
 
 #endif

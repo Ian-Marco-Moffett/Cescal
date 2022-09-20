@@ -1,15 +1,19 @@
-#include <scanner.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <panic.h>
 #include <ctype.h>
 #include <string.h>
+#include <scanner.h>
+#include <panic.h>
+#include <preprocessor.h>
 
 #define SHOULD_IGNORE(c) c == ' ' || c == '\t' || c == '\n' || c == '\r'
 #define PEEK_AHEAD(n) in_buf[in_buf_index + n]
 
 
+static char* old_in_buf = NULL;
+static size_t old_in_buf_idx = 0;
+static size_t old_line_num = 0;
 static const char* in_buf = NULL;
 static size_t in_buf_index = 0;
 static size_t line_number = 1;
@@ -131,8 +135,32 @@ static TOKEN_TYPE id_get_tok(const char* id) {
 }
 
 
+static TOKEN_TYPE preprocess_get_type(const char* directive) {
+    if (strcmp(directive, "include") == 0) {
+        return TT_INCLUDE;
+    }
+
+    return TT_INVALID;
+}
+
+
 void scanner_clear_cache(void) {
     last_alloc = NULL;
+}
+
+void scanner_change_buf(char* buf) {
+    old_in_buf = (char*)in_buf;
+    old_in_buf_idx = in_buf_index;
+    old_line_num = line_number;
+    in_buf = buf;
+    in_buf_index = 0;
+}
+
+void scanner_restore_buf(void) {
+    in_buf = old_in_buf;
+    in_buf_index = old_in_buf_idx;
+    line_number = old_line_num;
+    is_eof = 0;
 }
 
 
@@ -179,6 +207,25 @@ uint8_t scan(struct Token* out) {
         case '"':
             out->type = TT_STRINGLIT;
             out->tokstring = scanstr();
+            break;
+        case '@':
+            ++in_buf_index;
+            TOKEN_TYPE directive_type = preprocess_get_type(scanid());
+
+            if (directive_type == TT_INCLUDE) {
+                if (PEEK_AHEAD(1) != '"') {
+                    printf("ERROR: Expected \"filename.cekl\", line %d\n", line_number);
+                    panic();
+                }
+
+                ++in_buf_index;
+                const char* included_file = scanstr();
+                preprocessor_include(included_file, (char**)&in_buf, line_number);
+            } 
+           
+            ++in_buf_index;
+            scan(out);
+            --in_buf_index;
             break;
         case '!':
             if (PEEK_AHEAD(1) == '=') {

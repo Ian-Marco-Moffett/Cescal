@@ -12,12 +12,28 @@
 static char* g_buf = NULL;
 static FILE* g_fp = NULL;
 static uint32_t flags = 0;
+static const char* current_fname = NULL;
+
+
+void set_current_filename(const char* fname) {
+    if (fname == NULL) {
+        free((char*)current_fname);  // current_fname made by strdup().
+    }
+
+    current_fname = fname;
+}
 
 void panic(void) {
     if (g_buf != NULL) free(g_buf);
     if (g_fp != NULL) fclose(g_fp);
     scanner_destroy();
     destroy_symtbl();
+
+    if (current_fname != NULL) {
+        printf("(Error occured in included file %s)\n", current_fname);
+        free((char*)current_fname);         // current_fname made by strdup().
+    }
+
     exit(1);
 }
 
