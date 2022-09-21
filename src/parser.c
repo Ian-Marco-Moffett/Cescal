@@ -236,6 +236,27 @@ static struct ASTNode* if_statement(void) {
 }
 
 
+static struct ASTNode* while_statement(void) {
+    struct ASTNode* condition_ast;
+    struct ASTNode* body_ast;
+
+    scan(&last_tok);
+    passert(TT_LPAREN, "(");
+    scan(&last_tok);
+
+    condition_ast = binexpr(last_tok.line_number);
+    if (condition_ast->op < A_EQ || condition_ast->op > A_GE) {
+        printf("Syntax error: Bad comparison operator on line %d\n", last_tok.line_number);
+        panic();
+    }
+
+    passert(TT_RPAREN, ")");
+    scan(&last_tok);
+    body_ast = compound_statement();
+    return mkastnode(A_WHILE, condition_ast, body_ast, 0);
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -276,8 +297,10 @@ static struct ASTNode* compound_statement(void) {
             case TT_IF:
                 tree = if_statement();
                 break;
+            case TT_WHILE:
+                tree = while_statement();
+                break;
             default:
-                printf("%d\n", last_tok.type);
                 printf("Syntax error: Expected statement on line %d\n", last_tok.line_number);
                 panic();
                 break;

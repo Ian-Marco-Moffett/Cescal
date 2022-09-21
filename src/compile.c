@@ -78,6 +78,22 @@ static REG_T gen_if_ast(struct ASTNode* n) {
     return -1;
 }
 
+
+static int gen_while_ast(struct ASTNode* n) {
+    uint64_t lstart = alloc_label();
+    uint64_t lend = alloc_label();
+
+    gen_label(lstart);
+    ast_gen(n->left, lend, n->op);
+
+    regs_free();
+    ast_gen(n->right, -1, n->op);
+    regs_free();
+
+    jmp(lstart);
+    gen_label(lend);
+}
+
 static void prologue(void) {
   fputs(
           "extern printf\n\n"
@@ -178,6 +194,8 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     switch (n->op) {
         case A_IF:
             return gen_if_ast(n);
+        case A_WHILE:
+            return gen_while_ast(n);
         case A_GLUE:
             ast_gen(n->left, -1, n->op);
             regs_free();
@@ -217,7 +235,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_GT:
         case A_LE:
         case A_GE:
-            if (parent_ast_top == A_IF)
+            if (parent_ast_top == A_IF || parent_ast_top == A_WHILE)
                 return cmpandjmp(n->op, leftreg, rightreg, reg);
             else
                 return cmpandset(n->op, leftreg, rightreg);

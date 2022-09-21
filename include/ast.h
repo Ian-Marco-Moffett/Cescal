@@ -26,7 +26,8 @@ typedef enum {
     A_ASSIGN,
     A_ID,
     A_STRLIT,
-    A_IF
+    A_IF,
+    A_WHILE,
 } AST_NODE_TYPE;
 
 

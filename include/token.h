@@ -36,6 +36,7 @@ typedef enum {
     TT_U64,             // 25.
     TT_STRINGLIT,       // 26.
     TT_IF,              // 27.
+    TT_WHILE,           // 28.
 
     // Compiler built in related stuff.
     TT_PUTS, 

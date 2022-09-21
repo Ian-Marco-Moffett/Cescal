@@ -138,6 +138,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_U64;
     } else if (strcmp(id, "if") == 0) {
         return TT_IF;
+    } else if (strcmp(id, "while") == 0) {
+        return TT_WHILE;
     }
 
     return TT_ID;

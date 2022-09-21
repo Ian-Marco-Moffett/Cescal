@@ -1,3 +1,12 @@
 func main => null {
-    puts "Hello, World!";
+    u8 i = 0;
+
+    while (i < 5) {
+        puts i;
+        if (i > 2) {
+            puts "i is greater than 2";
+        }
+
+        i = i + 1;
+    }
 }
