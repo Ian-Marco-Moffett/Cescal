@@ -98,7 +98,7 @@ static struct ASTNode* print_statement(void) {
     struct ASTNode* tree;
     int64_t reg;
 
-    passert(TT_LINUX_PUTS, "__linux_puts");
+    passert(TT_PUTS, "puts");
     scan(&last_tok);
     
     if (last_tok.type == TT_STRINGLIT) {
@@ -221,7 +221,7 @@ static struct ASTNode* compound_statement(void) {
             case TT_RBRACE:
                 scan(&last_tok);
                 return left;
-            case TT_LINUX_PUTS:
+            case TT_PUTS:
                 tree = print_statement();
                 break;
             case TT_ID:

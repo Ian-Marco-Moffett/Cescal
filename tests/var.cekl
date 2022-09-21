@@ -1,5 +1,0 @@
-func main => null {
-    u8 blah = 2;
-    u8 blah1 = blah == 2;
-    __linux_puts blah1;
-}

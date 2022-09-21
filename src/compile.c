@@ -41,6 +41,18 @@ static void prologue(void) {
 }
 
 
+static void kessy_kern_prologue(void) {
+    fputs(
+          "extern kputs\n\n"
+          "section .text\n" 
+          "printstr:\n"
+          "\tcall kputs\n"
+          "\tret\n"
+          "\n",
+    g_out_file);
+}
+
+
 static void gen_func_prologue(const char* name) {
     fprintf(g_out_file, 
             "global %s\n\n"
@@ -181,8 +193,10 @@ void compile_start(void) {
 
     reg_init(g_out_file);
 
-    if (!(get_flags() & COMPILE_FLAG_FREESTANDING)) {
+    if (!(get_flags() & COMPILE_FLAG_FREESTANDING) && !(get_flags() & COMPILE_FLAG_KESSYKERNEL)) {
         prologue();
+    } else if (get_flags() & COMPILE_FLAG_KESSYKERNEL) {
+        kessy_kern_prologue();
     }
 }
 

@@ -15,6 +15,9 @@
 // Compiles as a freestanding binary (-freestanding)
 #define COMPILE_FLAG_FREESTANDING   (1 << 2)
 
+// Compiles for the Kessy Kernel.
+#define COMPILE_FLAG_KESSYKERNEL        (1 << 3)
+
 void compile_start(void);
 void compile_end(void);
 uint32_t get_flags(void);

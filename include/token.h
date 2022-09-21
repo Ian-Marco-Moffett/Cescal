@@ -37,7 +37,7 @@ typedef enum {
     TT_STRINGLIT,       // 26.
 
     // Compiler built in related stuff.
-    TT_LINUX_PUTS, 
+    TT_PUTS, 
     TT_INVALID,
 
     // NOT USED IN PARSING.

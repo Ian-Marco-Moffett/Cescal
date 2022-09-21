@@ -1,15 +1,3 @@
-func fav_nums => null {
-    __linux_puts 7;
-    __linux_puts 10;
-}
-
-func blah => null {
-    __linux_puts 0;
-    __linux_puts 1;
-    __linux_puts 2;
-}
-
 func main => null {
-    fav_nums();
-    blah();
+    puts "Hello, World!";
 }

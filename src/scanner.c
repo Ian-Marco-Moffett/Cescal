@@ -123,8 +123,8 @@ static const char* scanstr(void) {
 static TOKEN_TYPE id_get_tok(const char* id) {
     if (strcmp(id, "func") == 0) {
         return TT_FUNC;
-    } else if (strcmp(id, "__linux_puts") == 0) {
-        return TT_LINUX_PUTS;
+    } else if (strcmp(id, "puts") == 0) {
+        return TT_PUTS;
     } else if (strcmp(id, "null") == 0) {
         return TT_NULL;
     } else if (strcmp(id, "u8") == 0) {

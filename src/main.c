@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
             flags |= COMPILE_FLAG_ASMONLY;
         } else if (strcmp(argv[i], "-freestanding") == 0) {
            flags |= COMPILE_FLAG_FREESTANDING;
+        } else if (strcmp(argv[i], "-kessykernel") == 0) {
+            flags |= COMPILE_FLAG_KESSYKERNEL;
         } else if (strcmp(argv[i], "-c") == 0) {
             flags |= COMPILE_FLAG_OBJ;
         } else if (argv[i][0] != '-' && n_files < 2) {
