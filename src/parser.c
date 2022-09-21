@@ -156,6 +156,8 @@ static struct ASTNode* print_statement(void) {
 
     passert(TT_PUTS, "puts");
     scan(&last_tok);
+    passert(TT_LPAREN, "(");
+    scan(&last_tok);
     
     if (last_tok.type == TT_STRINGLIT) {
         tree = mkastleaf(A_STRLIT, globsym_get_strcnt());
@@ -165,12 +167,15 @@ static struct ASTNode* print_statement(void) {
 
         tree = mkastunary(A_LINUX_PUTS, tree, 0);
         scan(&last_tok);
+        passert(TT_RPAREN, ")");
+        scan(&last_tok);
         passert(TT_SEMI, ";");
         scan(&last_tok);
         return tree;
     }
 
     tree = binexpr(last_tok.line_number);
+    passert(TT_RPAREN, ")");
     tree = mkastunary(A_LINUX_PUTS, tree, 0);
     return tree;
 }
