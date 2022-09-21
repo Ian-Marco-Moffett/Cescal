@@ -337,9 +337,17 @@ static struct ASTNode* return_statement(void) {
         panic();
     }
 
+    size_t line = last_tok.line_number;
+        
     scan(&last_tok);
-    tree = binexpr(last_tok.line_number);
+    tree = binexpr(line);
     return_type = tree->type;
+
+    if (return_type > g_globsymTable[func_id].ptype) {
+        printf("Error: Returned value overflows return type of '%s', line %d\n", g_globsymTable[func_id].name, line);
+        panic();
+    }
+
     return mkastunary(A_RETURN, tree, 0);
 }
 
