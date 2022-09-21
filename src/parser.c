@@ -177,6 +177,9 @@ static struct ASTNode* print_statement(void) {
     tree = binexpr(last_tok.line_number);
     passert(TT_RPAREN, ")");
     tree = mkastunary(A_LINUX_PUTS, tree, 0);
+    scan(&last_tok);
+    passert(TT_SEMI, ";");
+    scan(&last_tok);
     return tree;
 }
 
