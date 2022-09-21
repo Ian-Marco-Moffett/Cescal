@@ -1,12 +1,14 @@
-func main => null {
+func main => u8 {
     u8 i = 0;
 
     while (i < 5) {
-        puts i;
+        puts(i);
         if (i > 2) {
-            puts "i is greater than 2";
+            puts("i is greater than 2");
         }
 
         i = i + 1;
     }
+
+    return 0;
 }
