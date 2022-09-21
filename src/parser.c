@@ -245,13 +245,19 @@ static struct ASTNode* while_statement(void) {
     scan(&last_tok);
 
     condition_ast = binexpr(last_tok.line_number);
-    if (condition_ast->op < A_EQ || condition_ast->op > A_GE) {
+    if ((condition_ast->op < A_EQ || condition_ast->op > A_GE) && condition_ast->op != A_INTLIT) {
         printf("Syntax error: Bad comparison operator on line %d\n", last_tok.line_number);
+        panic();
+    } else if (condition_ast->op == A_INTLIT && condition_ast->val_int == 0) {
+        printf("Syntax error: Useless statment on line %d\n", last_tok.line_number);
         panic();
     }
 
     passert(TT_RPAREN, ")");
     scan(&last_tok);
+    if (last_tok.type == TT_RBRACE) {
+        return mkastnode(A_WHILE, condition_ast, NULL, 0);
+    }
     body_ast = compound_statement();
     return mkastnode(A_WHILE, condition_ast, body_ast, 0);
 }

@@ -87,7 +87,9 @@ static int gen_while_ast(struct ASTNode* n) {
     ast_gen(n->left, lend, n->op);
 
     regs_free();
-    ast_gen(n->right, -1, n->op);
+    if (n->right) {
+        ast_gen(n->right, -1, n->op);
+    }
     regs_free();
 
     jmp(lstart);
@@ -235,7 +237,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_GT:
         case A_LE:
         case A_GE:
-            if (parent_ast_top == A_IF || parent_ast_top == A_WHILE)
+            if (parent_ast_top == A_IF || (parent_ast_top == A_WHILE))
                 return cmpandjmp(n->op, leftreg, rightreg, reg);
             else
                 return cmpandset(n->op, leftreg, rightreg);
