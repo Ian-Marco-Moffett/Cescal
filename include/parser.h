@@ -10,5 +10,7 @@ void parse(void);
  */
 void parse_noreset(void);
 
+int64_t get_func_id(void);
+
 
 #endif

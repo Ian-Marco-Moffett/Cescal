@@ -15,7 +15,9 @@ typedef enum {
     P_U8,
     P_U16,
     P_U32,
-    P_U64
+    P_U64,
+    P_NONE,
+    P_INVALID,
 } SYMBOL_PTYPE;
 
 

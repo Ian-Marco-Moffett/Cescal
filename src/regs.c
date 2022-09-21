@@ -5,10 +5,10 @@
 
 static uint8_t reg_bmp = 0xFF;
 static FILE* g_out_file;
-static const char* const REGS[4] = {"r8", "r9", "r10", "r11"};
-static const char* const BREGS[4] = {"r8b", "r9b", "r10b", "r11b"};
-static const char* const WREGS[4] = {"r8w", "r9w", "r10w", "r11w"};
-static const char* const DREGS[4] = {"r8d", "r9d", "r10d", "r11d"};
+static const char* const REGS[5] = {"r8", "r9", "r10", "r11", "rax"};
+static const char* const BREGS[5] = {"r8b", "r9b", "r10b", "r11b", "rax"};
+static const char* const WREGS[5] = {"r8w", "r9w", "r10w", "r11w", "rax"};
+static const char* const DREGS[5] = {"r8d", "r9d", "r10d", "r11d", "rax"};
 
 static REG_T reg_alloc(void) {
     for (REG_T reg = 0; reg < 4; ++reg) {
@@ -35,6 +35,14 @@ const char* get_rreg_str(REG_T r) {
 
 const char* get_breg_str(REG_T r) {
     return BREGS[r];
+}
+
+const char* get_dreg_str(REG_T r) {
+    return DREGS[r];
+}
+
+const char* get_wreg_str(REG_T r) {
+    return WREGS[r];
 }
 
 

@@ -7,6 +7,7 @@
 #include <ast.h>
 #include <symbol.h>
 #include <panic.h>
+#include <parser.h>
 
 #define GCC_PATH "/bin/gcc"
 #define NASM_PATH "/bin/nasm"
@@ -146,14 +147,32 @@ static void gen_func_prologue(const char* name) {
 
 static void gen_func_epilogue(void) {
     fprintf(g_out_file,
-            "\tmov rax, 0\n"
             "\tleave\n"
             "\tretq\n\n");
 }
 
 
-static void call(const char* func_name) {
-    fprintf(g_out_file, "\tcall %s\n", func_name);
+static REG_T call(int64_t func_id) {
+    fprintf(g_out_file, "\tcall %s\n", g_globsymTable[func_id]);
+    return RREG_RET;
+}
+
+
+static void ret(REG_T r, int64_t func_id) {
+    switch (g_globsymTable[func_id].ptype) {
+        case P_U8:
+            fprintf(g_out_file, "\tmovsx rax, %s\n", get_breg_str(r));
+            break;
+        case P_U16:
+            fprintf(g_out_file, "\tmovsx rax, %s\n", get_wreg_str(r));
+            break;
+        case P_U32:
+            fprintf(g_out_file, "\tmovsxd rax, %s\n", get_dreg_str(r));
+            break;
+        case P_U64:
+            fprintf(g_out_file, "\tmov rax, %s\n", get_rreg_str(r));
+            break;
+    }
 }
 
 
@@ -209,11 +228,11 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             if (n->left != NULL) {
                 ast_gen(n->left, -1, n->op);
             }
+
             gen_func_epilogue();
             return -1;
         case A_FUNCCALL:
-            call(g_globsymTable[n->id].name);
-            return -1;
+            return call(n->id);
     }
 
     if (n->left)
@@ -260,7 +279,10 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
 
             reg_printint(leftreg);
             regs_free();
-            return -1; 
+            return -1;
+        case A_RETURN:
+            ret(leftreg, get_func_id());
+            return -1;
         default:
             printf("__INTERNAL_ERROR__: Unknown AST operator [%d]!\n", n->op);
             panic();

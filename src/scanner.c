@@ -126,8 +126,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_FUNC;
     } else if (strcmp(id, "puts") == 0) {
         return TT_PUTS;
-    } else if (strcmp(id, "null") == 0) {
-        return TT_NULL;
+    } else if (strcmp(id, "none") == 0) {
+        return TT_NONE;
     } else if (strcmp(id, "u8") == 0) {
         return TT_U8;
     } else if (strcmp(id, "u16") == 0) {
@@ -140,6 +140,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_IF;
     } else if (strcmp(id, "while") == 0) {
         return TT_WHILE;
+    } else if (strcmp(id, "return") == 0) {
+        return TT_RETURN;
     }
 
     return TT_ID;

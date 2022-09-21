@@ -26,7 +26,7 @@ typedef enum {
     TT_FUNC,            // 15.
     TT_LBRACE,          // 16.
     TT_RBRACE,          // 17.
-    TT_NULL,            // 18.
+    TT_NONE,            // 18.
     TT_LPAREN,          // 19.
     TT_RPAREN,          // 20.
     TT_NOT,             // 21.
@@ -37,6 +37,7 @@ typedef enum {
     TT_STRINGLIT,       // 26.
     TT_IF,              // 27.
     TT_WHILE,           // 28.
+    TT_RETURN,          // 29.
 
     // Compiler built in related stuff.
     TT_PUTS, 

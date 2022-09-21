@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define RREG_RET 4
+
 
 typedef int8_t REG_T;
 
@@ -30,6 +32,8 @@ void reg_printint(REG_T r);
 void reg_printstr(REG_T r);
 const char* get_rreg_str(REG_T r);
 const char* get_breg_str(REG_T r);
+const char* get_dreg_str(REG_T r);
+const char* get_wreg_str(REG_T r);
 
 
 #endif

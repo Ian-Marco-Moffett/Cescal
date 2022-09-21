@@ -49,6 +49,13 @@ struct ASTNode* mkastleaf(AST_NODE_TYPE op, int64_t int_val) {
 }
 
 
+struct ASTNode* mkastleaf_type(AST_NODE_TYPE op, int64_t int_val, SYMBOL_PTYPE type) {
+    struct ASTNode* n = mkastleaf(op, int_val);
+    n->type = type;
+    return n;
+}
+
+
 struct ASTNode* mkastunary(AST_NODE_TYPE op, struct ASTNode* left, int64_t int_val) {
     return mkastnode(op, left, NULL, int_val);
 }

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <token.h>
+#include <symbol.h>
 
 
 typedef enum {
@@ -28,11 +29,13 @@ typedef enum {
     A_STRLIT,
     A_IF,
     A_WHILE,
+    A_RETURN,
 } AST_NODE_TYPE;
 
 
 struct ASTNode {
     AST_NODE_TYPE op;
+    SYMBOL_PTYPE type;
     struct ASTNode* left;
     struct ASTNode* right;
 
@@ -46,7 +49,7 @@ struct ASTNode {
 AST_NODE_TYPE arithop(TOKEN_TYPE tok);
 struct ASTNode* mkastnode(AST_NODE_TYPE op, struct ASTNode* left, struct ASTNode* right, int64_t val_int);
 struct ASTNode* mkastleaf(AST_NODE_TYPE op, int64_t int_val);
+struct ASTNode* mkastleaf_type(AST_NODE_TYPE op, int64_t int_val, SYMBOL_PTYPE type);
 struct ASTNode* mkastunary(AST_NODE_TYPE op, struct ASTNode* left, int64_t int_val);
-
 
 #endif

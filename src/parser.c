@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>
 #include <parser.h>
 #include <scanner.h>
 #include <ast.h>
@@ -7,10 +8,12 @@
 #include <compile.h>
 #include <symbol.h>
 
+static int64_t func_id = 0;
 static struct Token last_tok;
 
 
 static struct ASTNode* compound_statement(void);
+static struct ASTNode* funccall(void);
 
 
 static void passert(TOKEN_TYPE type, const char* what) {
@@ -22,17 +25,64 @@ static void passert(TOKEN_TYPE type, const char* what) {
 }
 
 
+static SYMBOL_PTYPE tok2type(TOKEN_TYPE tok) {
+    switch (tok) {
+        case TT_NONE:
+            return P_NONE;
+        case TT_U8:
+            return P_U8;
+        case TT_U16:
+            return P_U16;
+        case TT_U32:
+            return P_U32;
+        case TT_U64:
+            return P_U64;
+        default:
+            return P_INVALID;
+    }
+}
+
+
+static SYMBOL_PTYPE value2ptype(int64_t value) {
+    if (value < 0) {
+        return P_INVALID;           // TODO.
+    }
+
+    if (value <= UCHAR_MAX) {
+        return P_U8;
+    } else if (value <= USHRT_MAX) {
+        return P_U16;
+    } else if (value <= UINT_MAX) {
+        return P_U32;
+    } else if (value <= ULLONG_MAX) {
+        return P_U64;
+    } else {
+        printf("Error: Value overflows U64, line %d\n", last_tok.line_number);
+        panic();
+    }
+}
+
+
 static struct ASTNode* primary(void) {
     const struct ASTNode* n;
     int64_t id;
 
     switch (last_tok.type) {
         case TT_INTLIT:
-            n = mkastleaf(A_INTLIT, last_tok.tokint);
+            n = mkastleaf_type(A_INTLIT, last_tok.tokint, value2ptype(last_tok.tokint));
             scan(&last_tok);
             return (void*)n;
         case TT_ID:
             id = findglob(last_tok.tokstring);
+
+            struct Token peek;
+            scanner_peek(&peek);
+
+            // If the token ahead's type is a '(' then 
+            // this must be a function call.
+            if (peek.type == TT_LPAREN) {
+                return funccall();
+            }
 
             if (id == -1) {
                 printf("ERROR: Undeclared variable '%s' used on line %d\n", last_tok.tokstring, last_tok.line_number);
@@ -161,16 +211,31 @@ static struct ASTNode* var_def(SYMBOL_PTYPE ptype) {
         panic();
     }
 
+    size_t line = last_tok.line_number;
     uint64_t nameslot = addglob(last_tok.tokstring, S_VAR, ptype);
     scan(&last_tok);
 
     right = mkastleaf(A_LVIDENT, nameslot);
+    
+    // If variable is unassigned like so:
+    // u8 var;
+    if (last_tok.type == TT_SEMI) {
+        genglobsym(nameslot);
+        scan(&last_tok);
+        return NULL;
+    } else if (last_tok.type != TT_EQUALS) {
+        printf("Syntax Error: Expected '=' or ';' on line %d\n", line);
+        panic();
+    }
 
-    // TODO: Allow unassigned variables later.
-    passert(TT_EQUALS, "=");
     scan(&last_tok);
-
+    
     left = binexpr(last_tok.line_number);
+
+    if (left->type > ptype) {
+        printf("Warning: Value assigned overflows variable type on line %d\n", line);
+    }
+
     tree = mkastnode(A_ASSIGN, left, right, 0);
     genglobsym(nameslot);
     return tree;
@@ -263,6 +328,22 @@ static struct ASTNode* while_statement(void) {
 }
 
 
+static struct ASTNode* return_statement(void) {
+    struct ASTNode* tree;
+    SYMBOL_PTYPE return_type;
+
+    if (g_globsymTable[func_id].ptype == P_NONE) {
+        printf("Syntax Error: Cannot return a value from a function of type none, line %d\n", last_tok.line_number);
+        panic();
+    }
+
+    scan(&last_tok);
+    tree = binexpr(last_tok.line_number);
+    return_type = tree->type;
+    return mkastunary(A_RETURN, tree, 0);
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -306,6 +387,9 @@ static struct ASTNode* compound_statement(void) {
             case TT_WHILE:
                 tree = while_statement();
                 break;
+            case TT_RETURN:
+                tree = return_statement();
+                break;
             default:
                 printf("Syntax error: Expected statement on line %d\n", last_tok.line_number);
                 panic();
@@ -328,18 +412,33 @@ static struct ASTNode* func_decl(void) {
     scan(&last_tok);
     ident();
     uint64_t nameslot = addglob(last_tok.tokstring, S_FUNC, 0);
+    size_t line = last_tok.line_number;
+    func_id = nameslot;
     
     scan(&last_tok);
     passert(TT_EQUALS, "=>");
     scan(&last_tok);
     passert(TT_GREATERTHAN, "=>");
     scan(&last_tok);
-    passert(TT_NULL, "null");                   // TODO: Allow other return types.
-    scan(&last_tok);
 
+    SYMBOL_PTYPE ret_type = tok2type(last_tok.type);
+    g_globsymTable[func_id].ptype = ret_type;
+
+    // Ensure return type is valid.
+    if (ret_type == P_INVALID) {
+        printf("Syntax Error: Expected valid return type after '=>', line %d\n", line);
+        panic();
+    }
+
+    scan(&last_tok);
     tree = compound_statement();
 
     return mkastunary(A_FUNCTION, tree, nameslot);
+}
+
+
+int64_t get_func_id(void) {
+    return func_id;
 }
 
 
