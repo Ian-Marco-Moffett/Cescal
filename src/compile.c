@@ -14,6 +14,69 @@
 
 
 static FILE* g_out_file = NULL;
+REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top);
+
+static uint64_t alloc_label(void) {
+    static uint64_t i = 0;
+    return i++;
+}
+
+
+static void gen_label(uint64_t label) {
+    fprintf(g_out_file, "L%d:\n", label);
+}
+
+
+static REG_T cmpandset(int ast_top, REG_T r1, REG_T r2) {
+    if (ast_top < A_EQ || ast_top > A_GE) {
+        printf("__INTERNAL_ERROR__: Bad ast_top in %s()\n", __func__);
+        panic();
+    }
+
+    static char* const CMPLIST[6] = {"sete", "setne", "setl", "setg", "setle", "setge"};
+
+    fprintf(g_out_file, "\tcmp %s, %s\n", get_rreg_str(r1), get_rreg_str(r2));
+    fprintf(g_out_file, "\t%s %s\n", CMPLIST[ast_top - A_EQ], get_breg_str(r2));
+    fprintf(g_out_file, "\tmovzb %s, %s\n", get_rreg_str(r2), get_breg_str(r1));
+    reg_free(r1);
+    return r2;
+}
+
+
+static REG_T cmpandjmp(int ast_top, REG_T r1, REG_T r2, uint64_t label) {
+    if (ast_top < A_EQ || ast_top > A_GE) {
+        printf("__INTERNAL_ERROR__: Bad ast_top in %s()\n", __func__);
+        panic();
+    }
+
+    static char* const INVERTED_CMPLIST[6] = {"jne", "je", "jge", "jle", "jg", "jl"};
+    fprintf(g_out_file, "\tcmp %s, %s\n", get_rreg_str(r1), get_rreg_str(r2));
+    fprintf(g_out_file, "\t%s L%d\n", INVERTED_CMPLIST[ast_top - A_EQ], label);
+    regs_free();
+    return -1;
+}
+
+
+static void jmp(uint64_t l) {
+    fprintf(g_out_file, "\tjmp L%d\n", l);
+}
+
+
+static REG_T gen_if_ast(struct ASTNode* n) {
+    int lfalse = alloc_label();
+
+    ast_gen(n->left, lfalse, n->op);
+    regs_free();
+
+    ast_gen(n->right, -1, n->op);
+    regs_free();
+
+    jmp(lfalse);
+    
+    gen_label(lfalse);
+
+    return -1;
+}
 
 static void prologue(void) {
   fputs(
@@ -113,6 +176,8 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     int leftreg, rightreg;
 
     switch (n->op) {
+        case A_IF:
+            return gen_if_ast(n);
         case A_GLUE:
             ast_gen(n->left, -1, n->op);
             regs_free();
@@ -147,17 +212,15 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_DIV:
             return reg_div(leftreg, rightreg);
         case A_EQ:
-            return equal(leftreg, rightreg);
         case A_NE:
-            return notequal(leftreg, rightreg);
         case A_LT:
-            return lessthan(leftreg, rightreg);
         case A_GT:
-            return greaterthan(leftreg, rightreg);
         case A_LE:
-            return lessequal(leftreg, rightreg);
         case A_GE:
-            return greaterequal(leftreg, rightreg);
+            if (parent_ast_top == A_IF)
+                return cmpandjmp(n->op, leftreg, rightreg, reg);
+            else
+                return cmpandset(n->op, leftreg, rightreg);
         case A_INTLIT:
             return reg_load(n->val_int);
         case A_LVIDENT:

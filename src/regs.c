@@ -22,10 +22,19 @@ static REG_T reg_alloc(void) {
 }
 
 
-static void reg_free(REG_T reg) {
+void reg_free(REG_T reg) {
     if (reg < 4) {
         reg_bmp |= (1 << reg);
     }
+}
+
+
+const char* get_rreg_str(REG_T r) {
+    return REGS[r];
+}
+
+const char* get_breg_str(REG_T r) {
+    return BREGS[r];
 }
 
 

@@ -61,6 +61,7 @@ static int64_t scanint(void) {
         case '/':
         case '*':
         case ';':
+        case ')':
             break;
         default:
             if (SHOULD_IGNORE(in_buf[in_buf_index])) {
@@ -135,6 +136,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_U32;
     } else if (strcmp(id, "u64") == 0) {
         return TT_U64;
+    } else if (strcmp(id, "if") == 0) {
+        return TT_IF;
     }
 
     return TT_ID;
@@ -178,7 +181,7 @@ uint8_t scan(struct Token* out) {
 
         tok = in_buf[++in_buf_index];
     }
-    
+ 
     switch (tok) {
         case '0':
         case '1':
@@ -290,6 +293,11 @@ uint8_t scan(struct Token* out) {
             out->type = TT_RPAREN;
             out->tokstring = NULL;
             break;
+        case 0:
+            out->type = TT_EOF;
+            out->tokstring;
+            is_eof = 1;
+            return 0;
         default: 
             // Identifier or keyword.
             if (isalpha(tok) || tok == '_') {
@@ -300,12 +308,7 @@ uint8_t scan(struct Token* out) {
             }
             
             printf("ERROR: Invalid token '%c' while scanning! (line %d)\n", tok, line_number);
-            panic();
-        case 0:
-            out->type = TT_EOF;
-            out->tokstring;
-            is_eof = 1;
-            return 0;
+            panic(); 
     }
     
     out->line_number = line_number;

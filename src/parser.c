@@ -10,6 +10,9 @@
 static struct Token last_tok;
 
 
+static struct ASTNode* compound_statement(void);
+
+
 static void passert(TOKEN_TYPE type, const char* what) {
     if (last_tok.type != type) {
         printf("%d\n", last_tok.type);
@@ -58,6 +61,8 @@ static struct ASTNode* binexpr(uint64_t line) {
     if (last_tok.type == TT_SEMI) {
         scan(&last_tok);
         return left;
+    } else if (last_tok.type == TT_RPAREN) {
+        return left;
     } else if (last_tok.type == TT_RBRACE || last_tok.type == TT_EOF) {
         printf("Syntax error: Missing semicolon, line %d\n", line);
         panic();
@@ -76,6 +81,7 @@ static struct ASTNode* binexpr(uint64_t line) {
         case TT_NOTEQUAL:
             break;
         default:
+            printf("%d\n", last_tok.type);
             printf("Syntax error: Expected '<arithmetic operator>' on line %d\n", last_tok.line_number);
             panic();
     }
@@ -206,6 +212,30 @@ static struct ASTNode* id(void) {
 }
 
 
+static struct ASTNode* if_statement(void) {
+    struct ASTNode* conditionAST;
+    struct ASTNode* trueAST;
+    // struct ASTNode* falseAST; TODO
+
+    scan(&last_tok);
+
+    passert(TT_LPAREN, "(");
+    scan(&last_tok);
+
+    conditionAST = binexpr(last_tok.line_number);
+    if (conditionAST->op < A_EQ || conditionAST->op > A_GE) {
+        printf("Syntax error: Bad comparison operator on line %d\n", last_tok.line_number);
+        panic();
+    }
+
+    passert(TT_RPAREN, ")");
+    scan(&last_tok);
+
+    trueAST = compound_statement();
+    return mkastnode(A_IF, conditionAST, trueAST, 0);
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -242,6 +272,9 @@ static struct ASTNode* compound_statement(void) {
             case TT_U64:
                 scan(&last_tok);
                 tree = var_def(P_U64);
+                break;
+            case TT_IF:
+                tree = if_statement();
                 break;
             default:
                 printf("%d\n", last_tok.type);

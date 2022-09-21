@@ -10,6 +10,7 @@ typedef int8_t REG_T;
 
 void reg_init(FILE* out);
 void regs_free(void);
+void reg_free(REG_T reg);
 REG_T reg_load(int64_t value);
 REG_T reg_add(REG_T r1, REG_T r2);
 REG_T reg_mul(REG_T r1, REG_T r2);
@@ -27,6 +28,8 @@ REG_T load_glob(int64_t nameslot);                         // Load glob into reg
 
 void reg_printint(REG_T r);
 void reg_printstr(REG_T r);
+const char* get_rreg_str(REG_T r);
+const char* get_breg_str(REG_T r);
 
 
 #endif
