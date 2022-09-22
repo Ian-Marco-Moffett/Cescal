@@ -30,6 +30,7 @@ typedef enum {
     A_IF,
     A_WHILE,
     A_RETURN,
+    A_INLINE_ASM,
 } AST_NODE_TYPE;
 
 
@@ -38,6 +39,7 @@ struct ASTNode {
     SYMBOL_PTYPE type;
     struct ASTNode* left;
     struct ASTNode* right;
+    const char* _asm;               // Assembly attachment for inline assembly.
 
     union {
         int64_t val_int;

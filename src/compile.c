@@ -1,5 +1,7 @@
 #include <signal.h>
 #include <sys/wait.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <compile.h>
@@ -209,6 +211,14 @@ size_t globsym_get_strcnt(void) {
 
 
 
+static void insert_asm(struct ASTNode* asm_node) {
+    if (asm_node != NULL) {
+        fprintf(g_out_file, "\t%s\n", asm_node->_asm);
+        insert_asm(asm_node->right);
+    }
+}
+
+
 REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     int leftreg, rightreg;
 
@@ -233,6 +243,9 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             return -1;
         case A_FUNCCALL:
             return call(n->id);
+        case A_INLINE_ASM:
+            insert_asm(n);
+            return -1;
     }
 
     if (n->left)
@@ -307,7 +320,11 @@ void compile_start(void) {
 
 
 void compile_end(void) {
+    extern const char* target_fname;
     fclose(g_out_file);
+
+    char* obj_file = calloc(strlen(target_fname) + 8, sizeof(char));
+    sprintf(obj_file, "-o./%s.o", target_fname);
 
     if (get_flags() & (COMPILE_FLAG_ASMONLY)) {
         return;
@@ -315,7 +332,8 @@ void compile_end(void) {
 
     pid_t child = fork();
     if (child == 0) {
-        execl(NASM_PATH, NASM_PATH, "-felf64", "-o./ces.o", OUT_NAME, NULL);
+        execl(NASM_PATH, NASM_PATH, "-felf64", obj_file, OUT_NAME, NULL);
+        free(obj_file);
     } else {
         waitpid(child, 0, 0);
         kill(child, SIGKILL);

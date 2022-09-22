@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include <limits.h>
 #include <parser.h>
 #include <scanner.h>
@@ -360,6 +361,50 @@ static struct ASTNode* return_statement(void) {
 }
 
 
+static char* replace_char(char* str, char find, char replace) {
+    char* current_pos = strchr(str,find);
+    while (current_pos) {
+        *current_pos = replace;
+        current_pos = strchr(current_pos,find);
+    }
+
+    return str;
+}
+
+
+static struct ASTNode* inline_asm(void) {
+    struct ASTNode* left;
+    struct ASTNode* right;
+    struct ASTNode* top;
+
+    scan(&last_tok);
+    passert(TT_LBRACKET, "[");
+
+    size_t line = last_tok.line_number;
+    uint8_t is_done = 0;
+
+    char* assembly = scan_dil('\n', ']', &is_done);
+    assembly = replace_char(assembly, '{', '[');
+    assembly = replace_char(assembly, '}', ']');
+    left = mkastleaf(A_INLINE_ASM, 0);
+    left->_asm = assembly;
+    top = left;
+
+    while (!(is_done)) {
+        assembly = scan_dil('\n', ']', &is_done) ;
+        assembly = replace_char(assembly, '{', '[');
+        assembly = replace_char(assembly, '}', ']');
+        right = mkastunary(A_INLINE_ASM, left, 0);
+        right->_asm = assembly;
+        left->right = right;
+        left = right;
+    }
+    
+    scan(&last_tok);
+    return top;
+}
+
+
 static struct ASTNode* compound_statement(void) {
     struct ASTNode* left = NULL;
     struct ASTNode* tree = NULL;
@@ -405,6 +450,9 @@ static struct ASTNode* compound_statement(void) {
                 break;
             case TT_RETURN:
                 tree = return_statement();
+                break;
+            case TT_ASM:
+                tree = inline_asm();
                 break;
             default:
                 printf("Syntax error: Expected statement on line %d\n", last_tok.line_number);

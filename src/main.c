@@ -12,7 +12,8 @@
 static char* g_buf = NULL;
 static FILE* g_fp = NULL;
 static uint32_t flags = 0;
-static const char* current_fname = NULL;
+static const char* current_fname = NULL;            // Current included path being parsed.
+const char* target_fname;                           // File that's being compiled.
 
 
 void set_current_filename(const char* fname) {
@@ -100,6 +101,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
+        target_fname = argv[i];
         compile(fp);
     }
 

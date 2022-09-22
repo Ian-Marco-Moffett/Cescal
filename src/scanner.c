@@ -142,7 +142,9 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_WHILE;
     } else if (strcmp(id, "return") == 0) {
         return TT_RETURN;
-    }
+    } else if (strcmp(id, "__asm") == 0) {
+        return TT_ASM;
+    } 
 
     return TT_ID;
 }
@@ -159,6 +161,53 @@ static TOKEN_TYPE preprocess_get_type(const char* directive) {
 
 void scanner_clear_cache(void) {
     last_alloc = NULL;
+}
+
+
+/*
+ *  Scan until @param end is reached and split by @param dil.
+ *
+ *
+ */
+char* scan_dil(char dil, char end, uint8_t* is_end) {
+    size_t n = 0;
+    char* buf = calloc(n + 3, sizeof(char));
+    size_t start_line_num = line_number; 
+    char ch = in_buf[++in_buf_index];
+
+    uint8_t is_trimming_lspaces = 1;
+
+    while (1) {
+        if (ch == dil) {
+            *is_end = 0;
+            ++in_buf_index;
+            return buf;
+        } else if (ch == end) {
+            *is_end = 1;
+            ++in_buf_index;
+            return buf;
+        }
+
+        if ((ch == ' ' || ch == '\t') && is_trimming_lspaces) {
+            ch = in_buf[++in_buf_index];
+            continue;
+        } else {
+            is_trimming_lspaces = 0;
+        }
+
+        buf = realloc(buf, sizeof(char) * (n + 2));
+        buf[n++] = ch;
+        ch = in_buf[++in_buf_index];
+
+        if (ch == 0) {
+            free(buf);
+            printf("ERROR: EOF found before '%c' while scanning, line %d\n", end, start_line_num);
+            panic();
+        }
+    }
+    
+    last_alloc = buf;
+    return buf;
 }
 
 void scanner_change_buf(char* buf) {
@@ -215,6 +264,14 @@ uint8_t scan(struct Token* out) {
             break;
         case '*':
             out->type = TT_STAR;
+            out->tokstring = NULL;
+            break;
+        case '[':
+            out->type = TT_LBRACKET;
+            out->tokstring = NULL;
+            break;
+        case ']':
+            out->type = TT_RBRACKET;
             out->tokstring = NULL;
             break;
         case '"':

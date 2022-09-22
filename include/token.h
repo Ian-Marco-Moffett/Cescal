@@ -38,10 +38,14 @@ typedef enum {
     TT_IF,              // 27.
     TT_WHILE,           // 28.
     TT_RETURN,          // 29.
+    TT_LBRACKET,        // 30.
+    TT_RBRACKET,        // 31.
 
     // Compiler built in related stuff.
     TT_PUTS, 
+    TT_ASM,
     TT_INVALID,
+    
 
     // NOT USED IN PARSING.
     TT_INCLUDE,
