@@ -144,7 +144,9 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_RETURN;
     } else if (strcmp(id, "__asm") == 0) {
         return TT_ASM;
-    } 
+    } else if (strcmp(id, "extern") == 0) {
+        return TT_EXTERN;
+    }
 
     return TT_ID;
 }

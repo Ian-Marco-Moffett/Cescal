@@ -33,6 +33,8 @@ void panic(void) {
     if (current_fname != NULL) {
         printf("(Error occured in included file %s)\n", current_fname);
         free((char*)current_fname);         // current_fname made by strdup().
+    } else {
+        printf("(Error occured in %s)\n", target_fname);
     }
 
     exit(1);

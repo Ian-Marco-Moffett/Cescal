@@ -501,6 +501,49 @@ static struct ASTNode* func_decl(void) {
 }
 
 
+static struct ASTNode* _extern(void) {
+    scan(&last_tok); 
+    SYMBOL_PTYPE ptype;
+
+    // Variable.
+    if ((ptype = tok2type(last_tok.type)) != P_INVALID) {
+        // Var extern'd.
+        scan(&last_tok);
+        ident();
+        gen_global_extern(last_tok.tokstring);
+        addglob(last_tok.tokstring, S_VAR, ptype);
+        scan(&last_tok);
+        passert(TT_SEMI, ";");
+        scan(&last_tok);
+    } else if (last_tok.type == TT_FUNC) {
+        // Function extern'd.
+        scan(&last_tok);
+        ident();
+        const char* symbol_name = last_tok.tokstring; 
+        scan(&last_tok);
+
+        passert(TT_EQUALS, "=>");
+        scan(&last_tok);
+        passert(TT_GREATERTHAN, "=>");
+        scan(&last_tok);
+
+        if ((ptype = tok2type(last_tok.type)) == P_INVALID) {
+            printf("Error: Expected type after '=>', line %d\n", last_tok.line_number);
+            panic();
+        }
+
+        gen_global_extern(symbol_name);
+        addglob(symbol_name, S_VAR, ptype);
+
+        scan(&last_tok);
+        passert(TT_SEMI, ";");
+        scan(&last_tok);
+    } else {
+        printf("Error: Invalid extern usage (expected: extern <type> <name>), line %d\n", last_tok.line_number);
+        panic();
+    }
+}
+
 int64_t get_func_id(void) {
     return func_id;
 }
@@ -508,9 +551,15 @@ int64_t get_func_id(void) {
 
 void parse(void) {
     compile_start();
-
     scan(&last_tok);
+
     while (!(scanner_is_eof())) {
+        switch (last_tok.type) {
+            case TT_EXTERN:
+                _extern();
+                break;
+        }
+
         struct ASTNode* root = func_decl();
         ast_gen(root, -1, 0);
     }

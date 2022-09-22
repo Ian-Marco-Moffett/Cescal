@@ -40,6 +40,7 @@ typedef enum {
     TT_RETURN,          // 29.
     TT_LBRACKET,        // 30.
     TT_RBRACKET,        // 31.
+    TT_EXTERN,          // 32.
 
     // Compiler built in related stuff.
     TT_PUTS, 

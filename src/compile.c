@@ -219,6 +219,11 @@ static void insert_asm(struct ASTNode* asm_node) {
 }
 
 
+void gen_global_extern(const char* name) {
+    fprintf(g_out_file, "extern %s\n", name);
+}
+
+
 REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
     int leftreg, rightreg;
 

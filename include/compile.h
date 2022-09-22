@@ -27,4 +27,12 @@ void genglobsym_str(const char* str);
 size_t globsym_get_strcnt(void);
 REG_T load_strlit(size_t str_num);
 
+
+/*
+ *  Used for externs in the global scope.
+ *
+ */
+
+void gen_global_extern(const char* name);
+
 #endif
