@@ -18,6 +18,8 @@ typedef enum {
     A_GT,
     A_LE,
     A_GE,
+    A_SHR,
+    A_SHL,
     A_INTLIT,
     A_GLUE,
     A_FUNCTION,

@@ -321,6 +321,9 @@ uint8_t scan(struct Token* out) {
             if (PEEK_AHEAD(1) == '=') {
                 out->type = TT_GREATERTHANEQ;
                 in_buf_index += 1;
+            } else if (PEEK_AHEAD(1) == '>') {
+                out->type = TT_SHR;
+                in_buf_index += 1;
             } else {
                 out->type = TT_GREATERTHAN;
             }
@@ -329,6 +332,9 @@ uint8_t scan(struct Token* out) {
         case '<':
             if (PEEK_AHEAD(1) == '=') {
                 out->type = TT_LESSTHANEQ;
+                in_buf_index += 1;
+            } else if (PEEK_AHEAD(1) == '<') {
+                out->type = TT_SHL;
                 in_buf_index += 1;
             } else {
                 out->type = TT_LESSTHAN;

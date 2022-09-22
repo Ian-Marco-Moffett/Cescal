@@ -19,28 +19,30 @@ typedef enum {
     TT_GREATERTHAN,     // 8.
     TT_LESSTHANEQ,      // 9.
     TT_GREATERTHANEQ,   // 10.
-    TT_INTLIT,          // 11.
-    TT_SEMI,            // 12.
-    TT_EQUALS,          // 13.
-    TT_ID,              // 14.
-    TT_FUNC,            // 15.
-    TT_LBRACE,          // 16.
-    TT_RBRACE,          // 17.
-    TT_NONE,            // 18.
-    TT_LPAREN,          // 19.
-    TT_RPAREN,          // 20.
-    TT_NOT,             // 21.
-    TT_U8,              // 22.
-    TT_U16,             // 23.
-    TT_U32,             // 24.
-    TT_U64,             // 25.
-    TT_STRINGLIT,       // 26.
-    TT_IF,              // 27.
-    TT_WHILE,           // 28.
-    TT_RETURN,          // 29.
-    TT_LBRACKET,        // 30.
-    TT_RBRACKET,        // 31.
-    TT_EXTERN,          // 32.
+    TT_SHR,             // 11.
+    TT_SHL,             // 12.
+    TT_INTLIT,          // 13.
+    TT_SEMI,            // 14.
+    TT_EQUALS,          // 15.
+    TT_ID,              // 16.
+    TT_FUNC,            // 17.
+    TT_LBRACE,          // 18.
+    TT_RBRACE,          // 19.
+    TT_NONE,            // 20.
+    TT_LPAREN,          // 21.
+    TT_RPAREN,          // 22.
+    TT_NOT,             // 23.
+    TT_U8,              // 24.
+    TT_U16,             // 25.
+    TT_U32,             // 26.
+    TT_U64,             // 27.
+    TT_STRINGLIT,       // 28.
+    TT_IF,              // 29.
+    TT_WHILE,           // 30.
+    TT_RETURN,          // 31.
+    TT_LBRACKET,        // 32.
+    TT_RBRACKET,        // 33.
+    TT_EXTERN,          // 34. 
 
     // Compiler built in related stuff.
     TT_PUTS, 

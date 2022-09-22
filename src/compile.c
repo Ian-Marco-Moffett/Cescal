@@ -268,6 +268,10 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             return reg_mul(leftreg, rightreg);
         case A_DIV:
             return reg_div(leftreg, rightreg);
+        case A_SHR:
+            return reg_shr(leftreg, rightreg);
+        case A_SHL:
+            return reg_shl(leftreg, rightreg);
         case A_EQ:
         case A_NE:
         case A_LT:
@@ -338,22 +342,25 @@ void compile_end(void) {
     pid_t child = fork();
     if (child == 0) {
         execl(NASM_PATH, NASM_PATH, "-felf64", obj_file, OUT_NAME, NULL);
-        free(obj_file);
     } else {
         waitpid(child, 0, 0);
         kill(child, SIGKILL);
     }
 
     if (get_flags() & (COMPILE_FLAG_OBJ)) {
+        free(obj_file);
         return;
     }
 
     child = fork();
     if (child == 0) {
-        execl(GCC_PATH, GCC_PATH, "-o./a.out", "ces.o", "-no-pie", NULL);
+        sprintf(obj_file, "%s.o", target_fname);
+        execl(GCC_PATH, GCC_PATH, "-o./a.out", obj_file, "-no-pie", NULL);
     } else {
+        sprintf(obj_file, "%s.o", target_fname);
         waitpid(child, 0, 0);
-        remove("ces.o");
+        remove(obj_file);
+        free(obj_file);
         kill(child, SIGKILL);
     }
 }

@@ -130,6 +130,8 @@ static struct ASTNode* binexpr(uint64_t line) {
         case TT_GREATERTHANEQ:
         case TT_EQEQ:
         case TT_NOTEQUAL:
+        case TT_SHR:
+        case TT_SHL:
             break;
         default:
             printf("%d\n", last_tok.type);

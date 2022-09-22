@@ -18,6 +18,8 @@ REG_T reg_add(REG_T r1, REG_T r2);
 REG_T reg_mul(REG_T r1, REG_T r2);
 REG_T reg_sub(REG_T r1, REG_T r2);
 REG_T reg_div(REG_T r1, REG_T r2);
+REG_T reg_shr(REG_T r1, REG_T r2);
+REG_T reg_shl(REG_T r1, REG_T r2);
 
 REG_T equal(REG_T r1, REG_T r2);
 REG_T notequal(REG_T r1, REG_T r2);

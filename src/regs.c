@@ -86,6 +86,22 @@ REG_T reg_sub(REG_T r1, REG_T r2) {
 }
 
 
+REG_T reg_shl(REG_T r1, REG_T r2) {
+    fprintf(g_out_file, "\tmov cl, %s\n", BREGS[r2]);
+    fprintf(g_out_file, "\tshl %s, cl\n", REGS[r1]);
+    reg_free(r2);
+    return r1;
+}
+
+
+REG_T reg_shr(REG_T r1, REG_T r2) {
+    fprintf(g_out_file, "\tmov cl, %s\n", BREGS[r2]);
+    fprintf(g_out_file, "\tshr %s, cl\n", REGS[r1]);
+    reg_free(r2);
+    return r1;
+}
+
+
 REG_T reg_div(REG_T r1, REG_T r2) {
     fprintf(g_out_file, "\tmov rax, %s\n", REGS[r1]);
     fprintf(g_out_file, "\tcqo\n");
