@@ -477,13 +477,27 @@ static struct ASTNode* func_decl(void) {
     struct ASTNode* tree;
     
     FUNC_FLAGS flags = 0;
+    uint8_t loop = 1;
 
-    if (last_tok.type == TT_NAKED) {
-        flags |= FUNC_NAKED;
+    while (loop) {
+        switch (last_tok.type) {
+            case TT_NAKED:
+                flags |= FUNC_NAKED;
+                break;
+            case TT_PUBLIC:
+                flags |= FUNC_PUBLIC;
+                break;
+            case TT_FUNC:
+                loop = 0;
+                continue;
+            default:
+                printf("Syntax Error: Expected attribute, public and/or 'func', line %d\n", last_tok.line_number);
+                panic();
+        }
+
         scan(&last_tok);
     }
 
-    passert(TT_FUNC, "func");
     scan(&last_tok);
     ident();
     uint64_t nameslot = addglob(last_tok.tokstring, S_FUNC, 0);

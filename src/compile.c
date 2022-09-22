@@ -140,14 +140,17 @@ static void kessy_kern_prologue(void) {
 static void gen_func_prologue(int64_t func_id) {
     struct Symbol sym = g_globsymTable[func_id];
 
+    if (sym.func_flags & FUNC_PUBLIC) {
+        fprintf(g_out_file, "global %s\n", sym.name);
+    }
+
     // Do not generate prologue if function has the 'naked' attribute.
     if (!(sym.func_flags & FUNC_NAKED))
         fprintf(g_out_file, 
-                "global %s\n\n"
                 "section .text\n"
                 "%s:\n"
                 "\tpush rbp\n"
-                "\tmov rbp, rsp\n", sym.name, sym.name);
+                "\tmov rbp, rsp\n", sym.name);
     else
         fprintf(g_out_file, 
                 "global %s\n\n"
@@ -190,16 +193,16 @@ static void ret(REG_T r, int64_t func_id) {
 void genglobsym(int64_t nameslot) {
     switch (g_globsymTable[nameslot].ptype) {
         case P_U8:
-            fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot]);
+            fprintf(g_out_file, "\nsection .data\n%s: db 0\n\n", g_globsymTable[nameslot].name);
             break;
         case P_U16:
-            fprintf(g_out_file, "\nsection .data\n%s: dw 0\n\n", g_globsymTable[nameslot]);
+            fprintf(g_out_file, "\nsection .data\n%s: dw 0\n\n", g_globsymTable[nameslot].name);
             break;
         case P_U32:
-            fprintf(g_out_file, "\nsection .data\n%s: dd 0\n\n", g_globsymTable[nameslot]);
+            fprintf(g_out_file, "\nsection .data\n%s: dd 0\n\n", g_globsymTable[nameslot].name);
             break;
         case P_U64:
-            fprintf(g_out_file, "\nsection .data\n%s: dq 0\n\n", g_globsymTable[nameslot]);
+            fprintf(g_out_file, "\nsection .data\n%s: dq 0\n\n", g_globsymTable[nameslot].name);
             break;
         default:
             printf("__INTERNAL_ERROR__: Invalid ptype in %s()\n", __func__);

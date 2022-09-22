@@ -22,7 +22,8 @@ typedef enum {
 
 
 typedef enum {
-    FUNC_NAKED = (1 << 0)
+    FUNC_NAKED = (1 << 0),
+    FUNC_PUBLIC = (1 << 1),
 } FUNC_FLAGS;
 
 

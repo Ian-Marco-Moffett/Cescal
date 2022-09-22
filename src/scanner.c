@@ -148,6 +148,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_EXTERN;
     } else if (strcmp(id, "__naked") == 0) {
         return TT_NAKED;
+    } else if (strcmp(id, "public") == 0) {
+        return TT_PUBLIC;
     }
 
     return TT_ID;
