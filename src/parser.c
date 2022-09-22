@@ -402,6 +402,7 @@ static struct ASTNode* inline_asm(void) {
         left = right;
     }
     
+    top->val_int = 0;
     scan(&last_tok);
     return top;
 }
@@ -560,6 +561,14 @@ void parse(void) {
             case TT_EXTERN:
                 _extern();
                 break;
+            case TT_ASM:
+                // Tree->val_int is 1 meaning we
+                // aren't in a function and the inline assembly
+                // should not be tabbed.
+                struct ASTNode* tree = inline_asm();
+                tree->val_int = 1;
+                ast_gen(tree, -1, 0);
+                break;
         }
 
         struct ASTNode* root = func_decl();
@@ -575,6 +584,20 @@ void parse_noreset(void) {
 
     scan(&last_tok);
     while (!(scanner_is_eof())) {
+        switch (last_tok.type) {
+            case TT_EXTERN:
+                _extern();
+                break;
+            case TT_ASM:
+                // Tree->val_int is 1 meaning we
+                // aren't in a function and the inline assembly
+                // should not be tabbed.
+                struct ASTNode* tree = inline_asm();
+                tree->val_int = 1;
+                ast_gen(tree, -1, 0);
+                break;
+        }
+
         struct ASTNode* root = func_decl();
         ast_gen(root, -1, 0);
     }

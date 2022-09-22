@@ -182,7 +182,6 @@ char* scan_dil(char dil, char end, uint8_t* is_end) {
     while (1) {
         if (ch == dil) {
             *is_end = 0;
-            ++in_buf_index;
             return buf;
         } else if (ch == end) {
             *is_end = 1;

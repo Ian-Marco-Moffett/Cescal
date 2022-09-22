@@ -210,11 +210,21 @@ size_t globsym_get_strcnt(void) {
 }
 
 
+/*
+ *  @param no_tab is 0 if inline assembly should be tabbed.
+ *
+ *
+ */
 
-static void insert_asm(struct ASTNode* asm_node) {
+
+static void insert_asm(struct ASTNode* asm_node, uint8_t no_tab) {
     if (asm_node != NULL) {
-        fprintf(g_out_file, "\t%s\n", asm_node->_asm);
-        insert_asm(asm_node->right);
+        if (no_tab == 0)
+            fprintf(g_out_file, "\t%s\n", asm_node->_asm);
+        else
+            fprintf(g_out_file, "%s\n", asm_node->_asm);
+
+        insert_asm(asm_node->right, no_tab);
     }
 }
 
@@ -249,7 +259,9 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_FUNCCALL:
             return call(n->id);
         case A_INLINE_ASM:
-            insert_asm(n);
+            fprintf(g_out_file, ";; -- USER-GENERATED ASSEMBLY BEGINS HERE --\n\n");
+            insert_asm(n, n->val_int);
+            fprintf(g_out_file, ";; -- USER-GENERATED ASSEMBLY ENDS HERE --\n\n");
             return -1;
     }
 
