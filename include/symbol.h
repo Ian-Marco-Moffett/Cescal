@@ -21,10 +21,16 @@ typedef enum {
 } SYMBOL_PTYPE;
 
 
+typedef enum {
+    FUNC_NAKED = (1 << 0)
+} FUNC_FLAGS;
+
+
 struct Symbol {
     const char* name;
     SYMBOL_STYPE stype;
     SYMBOL_PTYPE ptype;
+    FUNC_FLAGS func_flags;
 };
 
 

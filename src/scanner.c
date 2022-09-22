@@ -146,6 +146,8 @@ static TOKEN_TYPE id_get_tok(const char* id) {
         return TT_ASM;
     } else if (strcmp(id, "extern") == 0) {
         return TT_EXTERN;
+    } else if (strcmp(id, "__naked") == 0) {
+        return TT_NAKED;
     }
 
     return TT_ID;

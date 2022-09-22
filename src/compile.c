@@ -137,13 +137,22 @@ static void kessy_kern_prologue(void) {
 }
 
 
-static void gen_func_prologue(const char* name) {
-    fprintf(g_out_file, 
-            "global %s\n\n"
-            "section .text\n"
-            "%s:\n"
-            "\tpush rbp\n"
-            "\tmov rbp, rsp\n", name, name);
+static void gen_func_prologue(int64_t func_id) {
+    struct Symbol sym = g_globsymTable[func_id];
+
+    // Do not generate prologue if function has the 'naked' attribute.
+    if (!(sym.func_flags & FUNC_NAKED))
+        fprintf(g_out_file, 
+                "global %s\n\n"
+                "section .text\n"
+                "%s:\n"
+                "\tpush rbp\n"
+                "\tmov rbp, rsp\n", sym.name, sym.name);
+    else
+        fprintf(g_out_file, 
+                "global %s\n\n"
+                "section .text\n"
+                "%s:\n", sym.name, sym.name);
 }
 
 
@@ -155,7 +164,7 @@ static void gen_func_epilogue(void) {
 
 
 static REG_T call(int64_t func_id) {
-    fprintf(g_out_file, "\tcall %s\n", g_globsymTable[func_id]);
+    fprintf(g_out_file, "\tcall %s\n", g_globsymTable[func_id].name);
     return RREG_RET;
 }
 
@@ -249,12 +258,18 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             regs_free();
             return -1;
         case A_FUNCTION:
-            gen_func_prologue(g_globsymTable[n->id].name);
+            gen_func_prologue(n->id);
+
             if (n->left != NULL) {
                 ast_gen(n->left, -1, n->op);
             }
+            
+            // Do not generate epilogue if function has the 'naked' attribute.
+            if (!(g_globsymTable[n->id].func_flags & FUNC_NAKED))
+                gen_func_epilogue();
+            else
+                fprintf(g_out_file, "\tud2\n\n");
 
-            gen_func_epilogue();
             return -1;
         case A_FUNCCALL:
             return call(n->id);

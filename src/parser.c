@@ -475,6 +475,14 @@ static struct ASTNode* compound_statement(void) {
 
 static struct ASTNode* func_decl(void) {
     struct ASTNode* tree;
+    
+    FUNC_FLAGS flags = 0;
+
+    if (last_tok.type == TT_NAKED) {
+        flags |= FUNC_NAKED;
+        scan(&last_tok);
+    }
+
     passert(TT_FUNC, "func");
     scan(&last_tok);
     ident();
@@ -490,6 +498,7 @@ static struct ASTNode* func_decl(void) {
 
     SYMBOL_PTYPE ret_type = tok2type(last_tok.type);
     g_globsymTable[func_id].ptype = ret_type;
+    g_globsymTable[func_id].func_flags = flags;
 
     // Ensure return type is valid.
     if (ret_type == P_INVALID) {

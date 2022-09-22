@@ -47,6 +47,7 @@ typedef enum {
     // Compiler built in related stuff.
     TT_PUTS, 
     TT_ASM,
+    TT_NAKED,
     TT_INVALID,
     
 
