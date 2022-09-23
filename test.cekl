@@ -1,0 +1,7 @@
+func test(u8 arg0) => u8 {
+    return arg0;
+}
+
+public func main => u8 {
+    puts(test(2));
+}

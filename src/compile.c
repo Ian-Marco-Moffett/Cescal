@@ -137,6 +137,11 @@ static void kessy_kern_prologue(void) {
 }
 
 
+static const char* const arg_regs_8[6] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+static const char* const arg_regs_16[6] = {"di", "si", "dx", "cx", "r8w", "r9w"};
+static const char* const arg_regs_32[6] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+static const char* const arg_regs_64[6] = {"rdi", "rsi", "rdx", "rcx", "r8d", "r9d"};
+
 static void gen_func_prologue(int64_t func_id) {
     struct Symbol sym = g_globsymTable[func_id];
 
@@ -145,17 +150,68 @@ static void gen_func_prologue(int64_t func_id) {
     }
 
     // Do not generate prologue if function has the 'naked' attribute.
-    if (!(sym.func_flags & FUNC_NAKED))
+    if (!(sym.func_flags & FUNC_NAKED)) {
         fprintf(g_out_file, 
                 "section .text\n"
                 "%s:\n"
                 "\tpush rbp\n"
                 "\tmov rbp, rsp\n", sym.name);
-    else
+
+        struct Symbol sym = g_globsymTable[func_id];
+        // Carve out n bytes of space.
+        // The global symbol's rbp_off field
+        // holds the max rbp off value (i.e rbp_off value for last local variable).
+        if (sym.rbp_off != 0) {
+            fprintf(g_out_file, "\tsub rsp, %d\n", sym.rbp_off);
+
+            for (int i = 0; i < sym.n_local_symbols; ++i) {
+                if (i < 6) {
+                    switch (sym.local_symtbl[i].ptype) {
+                        case P_U8:
+                            fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.local_symtbl[i].rbp_off, arg_regs_8[i]);
+                            break;
+                        case P_U16:
+                            fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.local_symtbl[i].rbp_off, arg_regs_16[i]);
+                            break;
+                        case P_U32:
+                            fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.local_symtbl[i].rbp_off, arg_regs_32[i]);
+                            break;
+                        case P_U64:
+                            fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.local_symtbl[i].rbp_off, arg_regs_32[i]);
+                            break;
+                    }
+                } else {
+                    // Start getting things off the stack now.
+                    uint64_t rbp_off = 0;
+
+                    switch (sym.local_symtbl[i].ptype) {
+                        case P_U8:
+                            rbp_off += 1;
+                            fprintf(g_out_file, "\tmov r8b, [rbp+%d]\n\tmov [rbp-%d], r8b\n", rbp_off, sym.local_symtbl[i].rbp_off);
+                            break;
+                        case P_U16:
+                            rbp_off += 2;
+                            fprintf(g_out_file, "\tmov r8w, [rbp+%d]\n\tmov [rbp-%d], r8w\n", rbp_off, sym.local_symtbl[i].rbp_off);
+                            break;
+                        case P_U32:
+                            rbp_off += 4;
+                            fprintf(g_out_file, "\tmov r8d, [rbp+%d]\n\tmov [rbp-%d], r8d\n", rbp_off, sym.local_symtbl[i].rbp_off);
+                            break;
+                        case P_U64:
+                            fprintf(g_out_file, "\tmov r8, [rbp+%d]\n\tmov [rbp-%d], r8\n", rbp_off, sym.local_symtbl[i].rbp_off);
+                            rbp_off += 8;
+                            break;
+                    }
+                }
+            }
+        }
+
+    } else {
         fprintf(g_out_file, 
                 "global %s\n\n"
                 "section .text\n"
                 "%s:\n", sym.name, sym.name);
+    }
 }
 
 
@@ -166,8 +222,54 @@ static void gen_func_epilogue(void) {
 }
 
 
-static REG_T call(int64_t func_id) {
-    fprintf(g_out_file, "\tcall %s\n", g_globsymTable[func_id].name);
+static REG_T call(struct ASTNode* n) {
+    uint32_t arg_i = 0;
+
+    struct ASTNode* cur = n->left;
+    while (1) {
+        if (cur == NULL) {
+            break;
+        }
+
+        REG_T r = ast_gen(cur->left, -1, 0);
+
+        if (arg_i < 6) {
+            switch (cur->val_int) {
+                case P_U8:
+                    fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_8[arg_i], get_breg_str(r));
+                    break;
+                case P_U16:
+                    fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_16[arg_i], get_wreg_str(r));
+                    break;
+                case P_U32:
+                    fprintf(g_out_file, "\tmovs %s, %s\n", arg_regs_32[arg_i], get_dreg_str(r));
+                    break;
+                case P_U64:
+                    fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_64[arg_i], get_rreg_str(r));
+                    break;
+            }
+        } else {
+            switch (cur->val_int) {
+                case P_U8:
+                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    break;
+                case P_U16:
+                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    break;
+                case P_U32:
+                    fprintf(g_out_file, "\tmovsxd r8, %s\n\tpush r8", get_rreg_str(r));
+                    break;
+                case P_U64:
+                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    break;
+            }
+        }
+
+        cur = cur->right;
+    }
+
+
+    fprintf(g_out_file, "\tcall %s\n", g_globsymTable[n->id].name);
     return RREG_RET;
 }
 
@@ -266,7 +368,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             if (n->left != NULL) {
                 ast_gen(n->left, -1, n->op);
             }
-            
+    
             // Do not generate epilogue if function has the 'naked' attribute.
             if (!(g_globsymTable[n->id].func_flags & FUNC_NAKED))
                 gen_func_epilogue();
@@ -275,7 +377,7 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
 
             return -1;
         case A_FUNCCALL:
-            return call(n->id);
+            return call(n);
         case A_INLINE_ASM:
             fprintf(g_out_file, ";; -- USER-GENERATED ASSEMBLY BEGINS HERE --\n\n");
             insert_asm(n, n->val_int);
@@ -333,7 +435,10 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
             regs_free();
             return -1;
         case A_RETURN:
-            ret(leftreg, get_func_id());
+            // 1 means returning the result of a function call.
+            if (n->val_int != 1)
+                ret(leftreg, get_func_id());
+
             return -1;
         default:
             printf("__INTERNAL_ERROR__: Unknown AST operator [%d]!\n", n->op);

@@ -267,6 +267,10 @@ uint8_t scan(struct Token* out) {
             out->type = TT_MINUS;
             out->tokstring = NULL;
             break;
+        case ',':
+            out->type = TT_COMMA;
+            out->tokstring = NULL;
+            break;
         case '*':
             out->type = TT_STAR;
             out->tokstring = NULL;

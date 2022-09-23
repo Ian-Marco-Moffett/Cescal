@@ -18,10 +18,30 @@ int64_t findglob(const char* name) {
 }
 
 
+int64_t find_loc(struct Symbol* glob, const char* local_name) {
+    for (int i = 0; i < glob->n_local_symbols; ++i) {
+        if (strcmp(glob->local_symtbl[i].name, local_name) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
 void destroy_symtbl(void) {
     for (int i = 0; i < g_globCount; ++i) {
+        // Free local symbols.
+        if (g_globsymTable[i].local_symtbl != NULL) {
+            for (int j = 0; j < g_globsymTable[i].n_local_symbols; ++j) {
+                free((char*)g_globsymTable[i].local_symtbl[j].name);
+            }
+
+            free(g_globsymTable[i].local_symtbl);
+        }
+
         free((char*)g_globsymTable[i].name);
-    } 
+    }
     
     if (g_globsymTable != NULL) {
         free(g_globsymTable);
@@ -39,6 +59,45 @@ void sym_tbl_init(void) {
     g_globsymTable = malloc(sizeof(struct Symbol));
 }
 
+
+void create_local_symtbl(struct Symbol* glob) {
+    glob->local_symtbl = malloc(sizeof(struct Symbol));
+    glob->n_local_symbols = 0;
+    glob->rbp_off = 0;
+}
+
+
+uint64_t local_symtbl_append(struct Symbol* glob, const char* name, SYMBOL_PTYPE ptype) {
+    struct Symbol s = {
+        .name = strdup(name),
+        .ptype = ptype,
+        .stype = S_VAR,
+        .scope = SCOPE_LOCAL
+    };
+
+    switch (ptype) {
+        case P_U8:
+            glob->rbp_off += 1;
+            break;
+        case P_U16:
+            glob->rbp_off += 2;
+            break;
+        case P_U32:
+            glob->rbp_off += 4;
+            break;
+        case P_U64:
+            glob->rbp_off += 8;
+            break;
+    }
+
+    s.rbp_off = glob->rbp_off;
+    glob->local_symtbl[glob->n_local_symbols++] = s;
+    glob->local_symtbl = realloc(glob->local_symtbl, sizeof(struct Symbol) * (glob->n_local_symbols + 2));
+    // Local variables always have the 63rd bit unset in their ID.
+    return glob->n_local_symbols - 1 & ~(1ULL << 63);
+}
+
+
 uint64_t addglob(const char* name, SYMBOL_STYPE stype, SYMBOL_PTYPE ptype) {
     int64_t slot;
     // If symbol already exists, return existing slot.
@@ -51,5 +110,10 @@ uint64_t addglob(const char* name, SYMBOL_STYPE stype, SYMBOL_PTYPE ptype) {
     g_globsymTable[slot].name = strdup(name);
     g_globsymTable[slot].stype = stype;
     g_globsymTable[slot].ptype = ptype;
-    return slot;
+    g_globsymTable[slot].scope = SCOPE_GLOBAL;
+    g_globsymTable[slot].local_symtbl = NULL;
+    g_globsymTable[slot].rbp_off = 0;
+    g_globsymTable[slot].n_args = 0;
+    // Global variables always have the 63rd bit set in their ID.
+    return slot | (1ULL << 62);
 }

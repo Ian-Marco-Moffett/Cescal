@@ -33,6 +33,7 @@ typedef enum {
     A_WHILE,
     A_RETURN,
     A_INLINE_ASM,
+    A_ARG,
 } AST_NODE_TYPE;
 
 

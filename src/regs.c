@@ -166,20 +166,49 @@ REG_T reg_store_glob(REG_T r, int64_t nameslot) {
 
 
 REG_T load_glob(int64_t nameslot) {
+    struct Symbol sym = g_globsymTable[nameslot];
     const char* glob_name = g_globsymTable[nameslot].name;
-    REG_T alloc = reg_alloc();
+    REG_T alloc = reg_alloc(); 
     
     switch (g_globsymTable[nameslot].ptype) {
         case P_U8:
+            // Local variables always have bit 63 in the
+            // slot number unset.
+            if (!(nameslot & (1ULL << 63))) {
+                fprintf(g_out_file, "\tmovsx %s, byte [rbp-%d]\n", REGS[alloc], sym.rbp_off);
+                break;
+            }
+
             fprintf(g_out_file, "\tmovsx %s, byte [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U16:
+            // Local variables always have bit 63 in the
+            // slot number unset.
+            if (!(nameslot & (1ULL << 63))) {
+                fprintf(g_out_file, "\tmovsx %s, word [rbp-%d]\n", REGS[alloc], sym.rbp_off);
+                break;
+            }
+
             fprintf(g_out_file, "\tmovsx %s, word [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U32:
+            // Local variables always have bit 63 in the
+            // slot number unset.
+            if (!(nameslot & (1ULL << 63))) {
+                fprintf(g_out_file, "\tmovsxd %s, dword [rbp-%d]\n", REGS[alloc], sym.rbp_off);
+                break;
+            }
+
             fprintf(g_out_file, "\tmovsxd %s, dword [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U64:
+            // Local variables always have bit 63 in the
+            // slot number unset.
+            if (!(nameslot & (1ULL << 63))) {
+                fprintf(g_out_file, "\tmov %s, [rbp-%d]\n", REGS[alloc], sym.rbp_off);
+                break;
+            }
+
             fprintf(g_out_file, "\tmov %s, qword [%s]\n", REGS[alloc], glob_name);
             break;
         default:

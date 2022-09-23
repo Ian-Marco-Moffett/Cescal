@@ -19,7 +19,6 @@ static struct ASTNode* funccall(void);
 
 static void passert(TOKEN_TYPE type, const char* what) {
     if (last_tok.type != type) {
-        printf("%d\n", last_tok.type);
         printf("Syntax error: Expected '%s' on line %d\n", what, last_tok.line_number == 0 ? 1 : last_tok.line_number);
         panic();
     }
@@ -75,6 +74,9 @@ static struct ASTNode* primary(void) {
             return (void*)n;
         case TT_ID:
             id = findglob(last_tok.tokstring);
+
+            if (id == -1)
+                id = find_loc(&g_globsymTable[func_id], last_tok.tokstring);
 
             struct Token peek;
             scanner_peek(&peek);
@@ -161,6 +163,23 @@ static struct ASTNode* print_statement(void) {
     scan(&last_tok);
     passert(TT_LPAREN, "(");
     scan(&last_tok);
+
+    struct Token peek;
+    scanner_peek(&peek);
+
+    if (last_tok.type == TT_ID && peek.type == TT_LPAREN) {
+        tree = funccall();
+        passert(TT_RPAREN, ")");
+        scan(&last_tok);
+        passert(TT_SEMI, ";");
+        scan(&last_tok);
+        
+        // val_int (last arg) is 1 because we are
+        // returning the result of a function call.
+
+        tree = mkastunary(A_LINUX_PUTS, tree, 0);
+        return tree;
+    }
     
     if (last_tok.type == TT_STRINGLIT) {
         tree = mkastleaf(A_STRLIT, globsym_get_strcnt());
@@ -188,7 +207,9 @@ static struct ASTNode* print_statement(void) {
 
 
 static struct ASTNode* funccall(void) {
-    struct ASTNode* tree;
+    struct ASTNode* tree = NULL;
+    struct ASTNode* left = NULL;
+    struct ASTNode* top = NULL;
     int64_t id;
 
     if ((id = findglob(last_tok.tokstring)) == -1) {
@@ -200,16 +221,48 @@ static struct ASTNode* funccall(void) {
     passert(TT_LPAREN, "(");
     scan(&last_tok);
 
-    // TODO: ARGUMENTS!!!
+    size_t line = last_tok.line_number;
+    uint32_t arg_count = 0;
+
+    while (1) {
+        if (last_tok.type == TT_RPAREN) {
+            top = NULL;
+            break;
+        }
+
+        left = binexpr(line);
+        tree = mkastnode(A_ARG, left, tree, left->type);
+        arg_count++;
+
+        if (top == NULL)
+            top = tree;
+
+        if (last_tok.type == TT_RPAREN) {
+            break;
+        }
+
+        passert(TT_COMMA, ",");
+    }
+
+    if (arg_count < g_globsymTable[id].n_args) {
+        printf("Error: Too few arguments passed for function '%s' on line %d\n", g_globsymTable[id].name, line);
+        panic();
+    } else if (arg_count > g_globsymTable[id].n_args) {
+        printf("Error: Too many arguments passed for function '%s' on line %d\n", g_globsymTable[id].name, line);
+        panic();
+    }
+
+    tree->right = NULL;
+
     passert(TT_RPAREN, ")");
     scan(&last_tok);
 
-    tree = mkastunary(A_FUNCCALL, tree, id);
+    tree = mkastunary(A_FUNCCALL, top, id);
     return tree;
 }
 
 
-static struct ASTNode* var_def(SYMBOL_PTYPE ptype) {
+static struct ASTNode* var_def(SYMBOL_PTYPE ptype, uint8_t glob) {
     struct ASTNode* left;
     struct ASTNode* right;
     struct ASTNode* tree;
@@ -223,9 +276,13 @@ static struct ASTNode* var_def(SYMBOL_PTYPE ptype) {
     }
 
     size_t line = last_tok.line_number;
-    uint64_t nameslot = addglob(last_tok.tokstring, S_VAR, ptype);
-    scan(&last_tok);
+    uint64_t nameslot;
+    if (glob)
+        nameslot = addglob(last_tok.tokstring, S_VAR, ptype);
+    else
+        nameslot = local_symtbl_append(&g_globsymTable[func_id], last_tok.tokstring, ptype);
 
+    scan(&last_tok);
     right = mkastleaf(A_LVIDENT, nameslot);
     
     // If variable is unassigned like so:
@@ -349,8 +406,24 @@ static struct ASTNode* return_statement(void) {
     }
 
     size_t line = last_tok.line_number;
-        
     scan(&last_tok);
+
+    struct Token peek;
+    scanner_peek(&peek);
+
+    if (peek.type == TT_LPAREN && last_tok.type == TT_ID) {
+        tree = funccall();
+
+        if (g_globsymTable[tree->val_int].ptype > g_globsymTable[func_id].ptype) {
+            printf("Error: Returned value overflows return type of '%s', line %d\n", g_globsymTable[func_id].name, line);
+            panic();
+        }
+        
+        // val_int (last arg) is 1 because we are
+        // returning the result of a function call.
+        return mkastunary(A_RETURN, tree, 1);
+    }
+
     tree = binexpr(line);
     return_type = tree->type;
 
@@ -431,19 +504,19 @@ static struct ASTNode* compound_statement(void) {
                 break;
             case TT_U8:
                 scan(&last_tok);
-                tree = var_def(P_U8);
+                tree = var_def(P_U8, 0);
                 break;
             case TT_U16:
                 scan(&last_tok);
-                tree = var_def(P_U16);
+                tree = var_def(P_U16, 0);
                 break;
             case TT_U32:
                 scan(&last_tok);
-                tree = var_def(P_U32);
+                tree = var_def(P_U32, 0);
                 break;
             case TT_U64:
                 scan(&last_tok);
-                tree = var_def(P_U64);
+                tree = var_def(P_U64, 0);
                 break;
             case TT_IF:
                 tree = if_statement();
@@ -474,7 +547,7 @@ static struct ASTNode* compound_statement(void) {
 
 
 static struct ASTNode* func_decl(void) {
-    struct ASTNode* tree;
+    struct ASTNode* tree = NULL;
     
     FUNC_FLAGS flags = 0;
     uint8_t loop = 1;
@@ -505,6 +578,57 @@ static struct ASTNode* func_decl(void) {
     func_id = nameslot;
     
     scan(&last_tok);
+
+    /*
+     *  If this is not a naked function
+     *  we must create a local symbol
+     *  table for this function
+     *  to hold the local symbols.
+     */
+    if (!(flags & FUNC_NAKED)) {
+        create_local_symtbl(&g_globsymTable[func_id]);
+    }
+
+
+    if (last_tok.type == TT_LPAREN && !(flags & FUNC_NAKED)) {
+        scan(&last_tok);
+        while (1) { 
+            SYMBOL_PTYPE type;
+
+            if ((type = tok2type(last_tok.type)) == P_INVALID) {
+                printf("Syntax Error: Expected <type> <argname>, line %d\n", last_tok.line_number);
+                panic();
+            }
+
+            scan(&last_tok);
+
+            /*
+             *  Store this symbol in the 
+             *  functions local symbol 
+             *  table.
+             */
+            
+            ident();
+            uint64_t symbol_id = local_symtbl_append(&g_globsymTable[func_id], last_tok.tokstring, type);
+            scan(&last_tok);
+
+            ++g_globsymTable[func_id].n_args;
+
+            // End of arguments list.
+            if (last_tok.type == TT_RPAREN) {
+                scan(&last_tok);
+                break;
+            }
+
+            passert(TT_COMMA, ",");
+            scan(&last_tok);
+        }
+    } else if (flags & FUNC_NAKED) {
+        // TODO.
+        printf("Error: Naked functions may not accept arguments (yet), line %d\n", last_tok.line_number);
+        panic();
+    }
+
     passert(TT_EQUALS, "=>");
     scan(&last_tok);
     passert(TT_GREATERTHAN, "=>");
