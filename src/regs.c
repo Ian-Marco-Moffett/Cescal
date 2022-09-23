@@ -1,5 +1,6 @@
 #include <regs.h>
 #include <symbol.h>
+#include <parser.h>
 #include <panic.h>
 #include <stddef.h>
 
@@ -140,16 +141,16 @@ void regs_free(void) {
 }
 
 
-REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
+REG_T reg_store_var(REG_T r, int64_t nameslot) {
     struct Symbol sym = g_globsymTable[nameslot];
     const char* glob_name = g_globsymTable[nameslot].name;
 
-    if (local_id != -1)
-        sym = sym.local_symtbl[local_id];
+    if (get_func_id() != -1)
+        sym = sym.local_symtbl[nameslot];
 
-    switch (g_globsymTable[nameslot].ptype) {
+    switch (sym.ptype) {
         case P_U8:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, BREGS[r]);
                 break;
             }
@@ -157,7 +158,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
             break;
         case P_U16:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, WREGS[r]);
                 break;
             }
@@ -165,7 +166,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmov word [%s], %s\n", glob_name, WREGS[r]);
             break;
         case P_U32:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, DREGS[r]);
                 break;
             }
@@ -173,7 +174,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmov dword [%s], %s\n", glob_name, DREGS[r]);
             break;
         case P_U64: 
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, REGS[r]);
                 break;
             }
@@ -189,21 +190,22 @@ REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
 }
 
 
-REG_T load_var(int64_t nameslot, int64_t local_id) {
+REG_T load_var(int64_t nameslot) {
     struct Symbol sym;
+    const char* glob_name = NULL;
 
-    if (local_id != -1) {
-        sym = g_globsymTable[nameslot].local_symtbl[local_id];
+    if (get_func_id() != -1) {
+        sym = g_globsymTable[get_func_id()].local_symtbl[nameslot];
+        glob_name = sym.name;
     } else {
         sym = g_globsymTable[nameslot];
     }
 
-    const char* glob_name = g_globsymTable[nameslot].name;
     REG_T alloc = reg_alloc(); 
     
     switch (sym.ptype) {
         case P_U8:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmovsx %s, byte [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -211,7 +213,7 @@ REG_T load_var(int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmovsx %s, byte [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U16:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmovsx %s, word [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -219,7 +221,7 @@ REG_T load_var(int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmovsx %s, word [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U32:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmovsxd %s, dword [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -227,7 +229,7 @@ REG_T load_var(int64_t nameslot, int64_t local_id) {
             fprintf(g_out_file, "\tmovsxd %s, dword [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U64:
-            if (local_id != -1) {
+            if (get_func_id() != -1) {
                 fprintf(g_out_file, "\tmov %s, [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }

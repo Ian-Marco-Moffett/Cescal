@@ -62,6 +62,7 @@ static int64_t scanint(void) {
         case '*':
         case ';':
         case ')':
+        case ',':
             break;
         default:
             if (SHOULD_IGNORE(in_buf[in_buf_index])) {

@@ -92,6 +92,7 @@ static struct ASTNode* primary(void) {
                 panic();
             }
             n = mkastleaf(A_ID, id);
+
             scan(&last_tok);
             return (void*)n;
         case TT_STRINGLIT:
@@ -114,7 +115,7 @@ static struct ASTNode* binexpr(uint64_t line) {
     if (last_tok.type == TT_SEMI) {
         scan(&last_tok);
         return left;
-    } else if (last_tok.type == TT_RPAREN) {
+    } else if (last_tok.type == TT_RPAREN || last_tok.type == TT_COMMA) {
         return left;
     } else if (last_tok.type == TT_RBRACE || last_tok.type == TT_EOF) {
         printf("Syntax error: Missing semicolon, line %d\n", line);
@@ -209,6 +210,8 @@ static struct ASTNode* print_statement(void) {
 static struct ASTNode* funccall(void) {
     struct ASTNode* tree = NULL;
     struct ASTNode* left = NULL;
+    struct ASTNode* right = NULL;
+    struct ASTNode* tmp = NULL;
     struct ASTNode* top = NULL;
     int64_t id;
 
@@ -231,17 +234,25 @@ static struct ASTNode* funccall(void) {
         }
 
         left = binexpr(line);
-        tree = mkastnode(A_ARG, left, tree, left->type);
+        right = mkastnode(A_ARG, left, NULL, left->type);
+        
         arg_count++;
-
+        
         if (top == NULL)
-            top = tree;
+            top = right;
+
+        if (tree == NULL)
+            tree = top;
+
+        tree->right = right;
+        tree = right;
 
         if (last_tok.type == TT_RPAREN) {
             break;
         }
 
         passert(TT_COMMA, ",");
+        scan(&last_tok);
     }
 
     if (arg_count < g_globsymTable[id].n_args) {
@@ -715,6 +726,7 @@ void parse(void) {
     scan(&last_tok);
 
     while (!(scanner_is_eof())) {
+        func_id = -1;
         switch (last_tok.type) {
             case TT_EXTERN:
                 _extern();

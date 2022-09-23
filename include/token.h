@@ -44,7 +44,7 @@ typedef enum {
     TT_RBRACKET,        // 33.
     TT_EXTERN,          // 34. 
     TT_PUBLIC,          // 35.
-    TT_COMMA,
+    TT_COMMA,           // 36.
 
     // Compiler built in related stuff.
     TT_PUTS, 

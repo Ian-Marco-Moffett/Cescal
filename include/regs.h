@@ -28,8 +28,8 @@ REG_T greaterthan(REG_T r1, REG_T r2);
 REG_T lessequal(REG_T r1, REG_T r2);
 REG_T greaterequal(REG_T r1, REG_T r2);
 REG_T reg_store_glob(REG_T r, int64_t nameslot);
-REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id);   // Stores reg into a var.
-REG_T load_var(int64_t nameslot, int64_t local_id);             // Load var into reg.
+REG_T reg_store_var(REG_T r, int64_t nameslot);                     // Stores reg into a var.
+REG_T load_var(int64_t nameslot);                                   // Loads var into reg.
 void reg_printint(REG_T r);
 void reg_printstr(REG_T r);
 const char* get_rreg_str(REG_T r);

@@ -266,6 +266,7 @@ static REG_T call(struct ASTNode* n) {
         }
 
         cur = cur->right;
+        arg_i++;
     }
 
 
@@ -417,11 +418,11 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_INTLIT:
             return reg_load(n->val_int);
         case A_LVIDENT:
-            return reg_store_var(reg, n->id, n->left->val_int);
+            return reg_store_var(reg, n->id);
         case A_STRLIT:
             return load_strlit(n->id);
         case A_ID:
-            return load_var(n->id, n->val_int);
+            return load_var(n->id);
         case A_ASSIGN:
             return rightreg;
         case A_LINUX_PUTS:
