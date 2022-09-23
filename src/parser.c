@@ -277,10 +277,14 @@ static struct ASTNode* var_def(SYMBOL_PTYPE ptype, uint8_t glob) {
 
     size_t line = last_tok.line_number;
     uint64_t nameslot;
-    if (glob)
-        nameslot = addglob(last_tok.tokstring, S_VAR, ptype);
-    else
-        nameslot = local_symtbl_append(&g_globsymTable[func_id], last_tok.tokstring, ptype);
+    if (glob) {
+        // Global symbols have the id's bit 63 set.
+        nameslot = addglob(last_tok.tokstring, S_VAR, ptype) | (1ULL << 63);
+    } else {
+        // For local variables the function ID will be returned but
+        // bit 63 will be unset.
+        nameslot = local_symtbl_append(&g_globsymTable[func_id], last_tok.tokstring, ptype) & ~(1ULL << 63);
+    }
 
     scan(&last_tok);
     right = mkastleaf(A_LVIDENT, nameslot);
@@ -303,8 +307,15 @@ static struct ASTNode* var_def(SYMBOL_PTYPE ptype, uint8_t glob) {
     if (left->type > ptype) {
         printf("Warning: Value assigned overflows variable type on line %d\n", line);
     }
+    
+    if (!(nameslot & (1ULL << 63)))
+        // Local variable.
+        tree = mkastnode(A_ASSIGN, left, right, func_id);
+    else
+        tree = mkastnode(A_ASSIGN, left, right, -1);
 
-    tree = mkastnode(A_ASSIGN, left, right, 0);
+    right->left = tree;
+
     genglobsym(nameslot);
     return tree;
 }

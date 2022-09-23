@@ -140,20 +140,44 @@ void regs_free(void) {
 }
 
 
-REG_T reg_store_glob(REG_T r, int64_t nameslot) {
+REG_T reg_store_var(REG_T r, int64_t nameslot, int64_t local_id) {
+    struct Symbol sym = g_globsymTable[nameslot];
     const char* glob_name = g_globsymTable[nameslot].name;
+
+    if (local_id != -1)
+        sym = sym.local_symtbl[local_id];
 
     switch (g_globsymTable[nameslot].ptype) {
         case P_U8:
+            if (local_id != -1) {
+                fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, BREGS[r]);
+                break;
+            }
+
             fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
             break;
         case P_U16:
+            if (local_id != -1) {
+                fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, WREGS[r]);
+                break;
+            }
+
             fprintf(g_out_file, "\tmov word [%s], %s\n", glob_name, WREGS[r]);
             break;
         case P_U32:
+            if (local_id != -1) {
+                fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, DREGS[r]);
+                break;
+            }
+
             fprintf(g_out_file, "\tmov dword [%s], %s\n", glob_name, DREGS[r]);
             break;
         case P_U64: 
+            if (local_id != -1) {
+                fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, REGS[r]);
+                break;
+            }
+
             fprintf(g_out_file, "\tmov qword [%s], %s\n", glob_name, REGS[r]);
             break;
         default:
@@ -165,16 +189,21 @@ REG_T reg_store_glob(REG_T r, int64_t nameslot) {
 }
 
 
-REG_T load_glob(int64_t nameslot) {
-    struct Symbol sym = g_globsymTable[nameslot];
+REG_T load_var(int64_t nameslot, int64_t local_id) {
+    struct Symbol sym;
+
+    if (local_id != -1) {
+        sym = g_globsymTable[nameslot].local_symtbl[local_id];
+    } else {
+        sym = g_globsymTable[nameslot];
+    }
+
     const char* glob_name = g_globsymTable[nameslot].name;
     REG_T alloc = reg_alloc(); 
     
-    switch (g_globsymTable[nameslot].ptype) {
+    switch (sym.ptype) {
         case P_U8:
-            // Local variables always have bit 63 in the
-            // slot number unset.
-            if (!(nameslot & (1ULL << 63))) {
+            if (local_id != -1) {
                 fprintf(g_out_file, "\tmovsx %s, byte [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -182,9 +211,7 @@ REG_T load_glob(int64_t nameslot) {
             fprintf(g_out_file, "\tmovsx %s, byte [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U16:
-            // Local variables always have bit 63 in the
-            // slot number unset.
-            if (!(nameslot & (1ULL << 63))) {
+            if (local_id != -1) {
                 fprintf(g_out_file, "\tmovsx %s, word [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -192,9 +219,7 @@ REG_T load_glob(int64_t nameslot) {
             fprintf(g_out_file, "\tmovsx %s, word [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U32:
-            // Local variables always have bit 63 in the
-            // slot number unset.
-            if (!(nameslot & (1ULL << 63))) {
+            if (local_id != -1) {
                 fprintf(g_out_file, "\tmovsxd %s, dword [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -202,9 +227,7 @@ REG_T load_glob(int64_t nameslot) {
             fprintf(g_out_file, "\tmovsxd %s, dword [%s]\n", REGS[alloc], glob_name);
             break;
         case P_U64:
-            // Local variables always have bit 63 in the
-            // slot number unset.
-            if (!(nameslot & (1ULL << 63))) {
+            if (local_id != -1) {
                 fprintf(g_out_file, "\tmov %s, [rbp-%d]\n", REGS[alloc], sym.rbp_off);
                 break;
             }
@@ -218,6 +241,9 @@ REG_T load_glob(int64_t nameslot) {
 
     return alloc;
 }
+
+
+REG_T load_local(int64_t nameslot);
 
 REG_T load_strlit(size_t str_num) {
     REG_T alloc = reg_alloc();

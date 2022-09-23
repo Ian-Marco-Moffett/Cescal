@@ -15,6 +15,8 @@
 #define NASM_PATH "/bin/nasm"
 #define OUT_NAME "/tmp/cescal-out.asm"
 
+#define ALIGN_UP(val, align)    (((val) + (align)-1) & ~((align)-1))
+
 
 static FILE* g_out_file = NULL;
 REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top);
@@ -116,9 +118,7 @@ static void prologue(void) {
           "printstr:\n"
           "\tmov rsi, rdi\n"
           "\tmov rdi, string\n"
-          "\tpush rsp\n"
           "\tcall [rel printf wrt ..got]\n"
-          "\tpop rsp\n"
           "\tret\n"
           "\n",
   g_out_file);
@@ -162,7 +162,7 @@ static void gen_func_prologue(int64_t func_id) {
         // The global symbol's rbp_off field
         // holds the max rbp off value (i.e rbp_off value for last local variable).
         if (sym.rbp_off != 0) {
-            fprintf(g_out_file, "\tsub rsp, %d\n", sym.rbp_off);
+            fprintf(g_out_file, "\tsub rsp, %d\n", ALIGN_UP(sym.rbp_off, 16));
 
             for (int i = 0; i < sym.n_local_symbols; ++i) {
                 if (i < 6) {
@@ -417,11 +417,11 @@ REG_T ast_gen(struct ASTNode* n, int reg, int parent_ast_top) {
         case A_INTLIT:
             return reg_load(n->val_int);
         case A_LVIDENT:
-            return reg_store_glob(reg, n->id);
+            return reg_store_var(reg, n->id, n->left->val_int);
         case A_STRLIT:
             return load_strlit(n->id);
         case A_ID:
-            return load_glob(n->id);
+            return load_var(n->id, n->val_int);
         case A_ASSIGN:
             return rightreg;
         case A_LINUX_PUTS:

@@ -1,7 +1,8 @@
-func test(u8 arg0) => u8 {
-    return arg0;
+func test(u8 arg0) => none {
+    puts(arg0);
 }
 
 public func main => u8 {
-    puts(test(2));
+    test(2);
+    return 0;
 }

@@ -93,8 +93,7 @@ uint64_t local_symtbl_append(struct Symbol* glob, const char* name, SYMBOL_PTYPE
     s.rbp_off = glob->rbp_off;
     glob->local_symtbl[glob->n_local_symbols++] = s;
     glob->local_symtbl = realloc(glob->local_symtbl, sizeof(struct Symbol) * (glob->n_local_symbols + 2));
-    // Local variables always have the 63rd bit unset in their ID.
-    return glob->n_local_symbols - 1 & ~(1ULL << 63);
+    return glob->n_local_symbols - 1;
 }
 
 
@@ -114,6 +113,5 @@ uint64_t addglob(const char* name, SYMBOL_STYPE stype, SYMBOL_PTYPE ptype) {
     g_globsymTable[slot].local_symtbl = NULL;
     g_globsymTable[slot].rbp_off = 0;
     g_globsymTable[slot].n_args = 0;
-    // Global variables always have the 63rd bit set in their ID.
-    return slot | (1ULL << 62);
+    return slot;
 }
