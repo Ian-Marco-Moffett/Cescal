@@ -257,6 +257,14 @@ uint8_t scan(struct Token* out) {
             out->tokint = scanint();
             break;
         case '/':
+            if (PEEK_AHEAD(1) == '/') {
+                char cur;
+                while ((cur = in_buf[in_buf_index++]) != '\n');
+                scan(out);
+                --in_buf_index;
+                break;
+            }
+
             out->type = TT_SLASH;
             out->tokstring = NULL;
             break;
