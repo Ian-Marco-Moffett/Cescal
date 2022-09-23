@@ -25,6 +25,8 @@ syn match cescalU16  "u16\>"
 syn match cescalU32  "u32\>"
 syn match cescalU64  "u64\>"
 syn match cescalNone  "none\>"
+syn match cescalReturn  "return\>"
+syn match cescalComment "\/\/.*"
 
 " Various #'s as defined by GAS ref manual sec 3.6.2.1
 " Technically, the first asmDecimal is actually octal,
@@ -125,3 +127,5 @@ hi link cescalU16 Macro
 hi link cescalU32 Macro
 hi link cescalU64 Macro
 hi link cescalNone Macro
+hi link cescalReturn Macro
+hi link cescalComment Comment
