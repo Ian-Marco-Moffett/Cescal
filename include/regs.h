@@ -9,6 +9,13 @@
 
 typedef int8_t REG_T;
 
+typedef enum {
+    REG_BREG,
+    REG_WREG,
+    REG_DREG,
+    REG_RREG
+} REG_TYPE;
+
 
 void reg_init(FILE* out);
 void regs_free(void);
@@ -20,6 +27,7 @@ REG_T reg_sub(REG_T r1, REG_T r2);
 REG_T reg_div(REG_T r1, REG_T r2);
 REG_T reg_shr(REG_T r1, REG_T r2);
 REG_T reg_shl(REG_T r1, REG_T r2);
+REG_T reg_mov(REG_T r, REG_TYPE type);
 
 REG_T equal(REG_T r1, REG_T r2);
 REG_T notequal(REG_T r1, REG_T r2);

@@ -18,7 +18,9 @@ static REG_T reg_alloc(void) {
             return reg;
         }
     }
-
+    
+    printf("__INTERNAL_ERROR__: OUT OF REGS!\n");
+    panic();
     return -1;
 }
 
@@ -70,6 +72,31 @@ REG_T reg_load(int64_t value) {
     REG_T r = reg_alloc();
     fprintf(g_out_file, "\tmov %s, %d\n", REGS[r], value);
     return r;
+}
+
+
+REG_T reg_mov(REG_T r, REG_TYPE type) {
+    REG_T r1 = reg_alloc();
+
+    switch (type) {
+        case REG_BREG:
+            fprintf(g_out_file, "\tmovsx %s, %s\n", REGS[r1], BREGS[r]);
+            break;
+        case REG_WREG:
+            fprintf(g_out_file, "\tmovsx %s, %s\n", REGS[r1], WREGS[r]);
+            break;
+        case REG_DREG:
+            fprintf(g_out_file, "\tmovsxd %s, %s\n", REGS[r1], DREGS[r]);
+            break;
+        case REG_RREG:
+            fprintf(g_out_file, "\tmov %s, %s\n", REGS[r1], REGS[r]);
+            break;
+        default:
+            printf("__INTERNAL_ERRROR__: Invalid reg size passed to %s()\n", __func__);
+            panic();
+    }
+
+    return r1;
 }
 
 
@@ -144,13 +171,18 @@ void regs_free(void) {
 REG_T reg_store_var(REG_T r, int64_t nameslot) {
     struct Symbol sym = g_globsymTable[nameslot];
     const char* glob_name = g_globsymTable[nameslot].name;
-
+    
+    uint8_t is_local = 0;
+    
+    /*
+    TODO
     if (get_func_id() != -1)
-        sym = sym.local_symtbl[nameslot];
+        is_local = 1;
+    */
 
     switch (sym.ptype) {
         case P_U8:
-            if (get_func_id() != -1) {
+            if (is_local) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, BREGS[r]);
                 break;
             }
@@ -158,7 +190,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot) {
             fprintf(g_out_file, "\tmov byte [%s], %s\n", glob_name, BREGS[r]);
             break;
         case P_U16:
-            if (get_func_id() != -1) {
+            if (is_local) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, WREGS[r]);
                 break;
             }
@@ -166,7 +198,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot) {
             fprintf(g_out_file, "\tmov word [%s], %s\n", glob_name, WREGS[r]);
             break;
         case P_U32:
-            if (get_func_id() != -1) {
+            if (is_local) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, DREGS[r]);
                 break;
             }
@@ -174,7 +206,7 @@ REG_T reg_store_var(REG_T r, int64_t nameslot) {
             fprintf(g_out_file, "\tmov dword [%s], %s\n", glob_name, DREGS[r]);
             break;
         case P_U64: 
-            if (get_func_id() != -1) {
+            if (is_local) {
                 fprintf(g_out_file, "\tmov [rbp-%d], %s\n", sym.rbp_off, REGS[r]);
                 break;
             }

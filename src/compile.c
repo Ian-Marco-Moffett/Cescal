@@ -157,12 +157,20 @@ static void gen_func_prologue(int64_t func_id) {
                 "\tpush rbp\n"
                 "\tmov rbp, rsp\n", sym.name);
 
+        // Compute the amount of alignment we need.
         struct Symbol sym = g_globsymTable[func_id];
+        size_t align = 0;
+        for (int i = 0; i < sym.n_local_symbols; ++i) {
+            if (i >= 6) {
+                align += 16-8;
+            }
+        }
+
         // Carve out n bytes of space.
         // The global symbol's rbp_off field
         // holds the max rbp off value (i.e rbp_off value for last local variable).
         if (sym.rbp_off != 0) {
-            fprintf(g_out_file, "\tsub rsp, %d\n", ALIGN_UP(sym.rbp_off, 16));
+            fprintf(g_out_file, "\tsub rsp, %d\n", ALIGN_UP(sym.rbp_off, 16) + align);
 
             for (int i = 0; i < sym.n_local_symbols; ++i) {
                 if (i < 6) {
@@ -237,34 +245,47 @@ static REG_T call(struct ASTNode* n) {
             switch (cur->val_int) {
                 case P_U8:
                     fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_8[arg_i], get_breg_str(r));
+                    regs_free();
                     break;
                 case P_U16:
                     fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_16[arg_i], get_wreg_str(r));
+                    regs_free();
                     break;
                 case P_U32:
                     fprintf(g_out_file, "\tmovs %s, %s\n", arg_regs_32[arg_i], get_dreg_str(r));
+                    regs_free();
                     break;
                 case P_U64:
                     fprintf(g_out_file, "\tmov %s, %s\n", arg_regs_64[arg_i], get_rreg_str(r));
+                    regs_free();
                     break;
             }
         } else {
+            REG_T r_mov;
             switch (cur->val_int) {
                 case P_U8:
-                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    r_mov = reg_mov(r, REG_BREG);
+                    fprintf(g_out_file, "\tpush %s\n", get_rreg_str(r_mov));
+                    regs_free();
                     break;
                 case P_U16:
-                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    r_mov = reg_mov(r, REG_WREG);
+                    fprintf(g_out_file, "\tpush %s\n", get_rreg_str(r_mov));
+                    regs_free();
                     break;
                 case P_U32:
-                    fprintf(g_out_file, "\tmovsxd r8, %s\n\tpush r8", get_rreg_str(r));
+                    r_mov = reg_mov(r, REG_DREG);
+                    fprintf(g_out_file, "\tpush %s\n", get_rreg_str(r_mov));
+                    regs_free();
                     break;
                 case P_U64:
-                    fprintf(g_out_file, "\tmovsx r8, %s\n\tpush r8", get_rreg_str(r));
+                    r_mov = reg_mov(r, REG_RREG);
+                    fprintf(g_out_file, "\tpush %s\n", get_rreg_str(r_mov));
+                    regs_free();
                     break;
             }
         }
-
+        
         cur = cur->right;
         arg_i++;
     }
