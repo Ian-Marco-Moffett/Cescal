@@ -262,8 +262,9 @@ static struct ASTNode* funccall(void) {
         printf("Error: Too many arguments passed for function '%s' on line %d\n", g_globsymTable[id].name, line);
         panic();
     }
-
-    tree->right = NULL;
+    
+    if (arg_count > 0)
+        tree->right = NULL;
 
     passert(TT_RPAREN, ")");
     scan(&last_tok);
@@ -596,7 +597,6 @@ static struct ASTNode* func_decl(void) {
         create_local_symtbl(&g_globsymTable[func_id]);
     }
 
-
     if (last_tok.type == TT_LPAREN && !(flags & FUNC_NAKED)) {
         scan(&last_tok);
         while (1) { 
@@ -630,11 +630,12 @@ static struct ASTNode* func_decl(void) {
             passert(TT_COMMA, ",");
             scan(&last_tok);
         }
-    } else if (flags & FUNC_NAKED) {
+    } else if (flags & FUNC_NAKED && last_tok.type == TT_LPAREN) {
         // TODO.
         printf("Error: Naked functions may not accept arguments (yet), line %d\n", last_tok.line_number);
         panic();
     }
+
 
     passert(TT_EQUALS, "=>");
     scan(&last_tok);
